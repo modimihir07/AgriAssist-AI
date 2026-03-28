@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "Analysis": {
+      "title": "Analysis",
+      "description": "A crop disease analysis result",
+      "type": "object",
+      "properties": {
+        "plantType": { "type": "string" },
+        "disease": { "type": "string" },
+        "confidence": { "type": "number" },
+        "remedies": { "type": "array", "items": { "type": "string" } },
+        "prevention": { "type": "array", "items": { "type": "string" } },
+        "timestamp": { "type": "timestamp" },
+        "language": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["plantType", "disease", "confidence", "remedies", "prevention", "timestamp", "language"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/analyses/{analysisId}": {
+      "schema": { "$ref": "#/entities/Analysis" },
+      "description": "Analyses for a specific user"
+    }
+  }
+}

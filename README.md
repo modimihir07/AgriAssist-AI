@@ -1,11 +1,164 @@
-<div align="center">
+# AgriAssist AI 🌿
+### Smart Farming, Empowered by AI
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+AgriAssist AI is a comprehensive full-stack application designed to empower farmers with instant crop disease diagnosis and pest detection using state-of-the-art AI. By capturing or uploading a photo of a plant, farmers receive detailed analysis, treatment recommendations, and real-time environmental context to make informed decisions.
 
-  <h1>Built with AI Studio</h2>
+---
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## 🚀 Features
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+### 🔍 Image Analysis
+- **✅ Plant Disease Diagnosis**: Instant identification of crop diseases with confidence scores.
+- **✅ Pest Detection**: Detects common agricultural pests and suggests targeted treatments.
+- **✅ Actionable Remedies**: Provides immediate steps and long-term prevention strategies.
+- **✅ Optimized Image Processing**: Fast, deterministic image hashing for consistent offline mock data selection.
 
-</div>
+### 💬 AI Assistant & Voice
+- **✅ Multilingual Chat**: Interactive AI assistant for farming queries in 5+ languages.
+- **✅ Voice Input**: Hands-free operation using browser-based Speech Recognition.
+- **✅ Voice Output**: Text-to-speech (TTS) capabilities for accessibility and ease of use.
+
+### 🌐 Connectivity & Environment
+- **✅ Offline Resilience**: Full functionality in low-connectivity areas with local caching, pre-cached mock data for common diseases, and clear offline indicators.
+- **✅ Real-time Weather**: Integrated temperature and environmental data via OpenWeatherMap with robust error handling and mock fallbacks.
+- **✅ Geolocation**: Automatic regional context for more accurate climate-based advice.
+
+### 🌍 Multilingual Support
+- **✅ Enhanced Language Selection**: Support for English, Hindi (हिन्दी), Spanish (Español), French (Français), and Gujarati (ગુજરાતી).
+- **✅ Localized UI**: Entire interface adapts to the selected language, including all feedback messages.
+
+### 🔐 User Accounts & Sharing
+- **✅ Firebase Authentication**: Secure Google Sign-In for personalized experiences.
+- **✅ Cloud Data Persistence**: Analysis results are saved to Firestore, with images securely uploaded to Firebase Storage.
+- **✅ Share Results**: Easily share diagnosis and remedies via Web Share API or clipboard.
+
+### 📱 Production & UX Refinements
+- **✅ Mobile Browser Optimization**: Enhanced viewport handling and optimized image rendering for mobile users.
+- **✅ Toast Notification System**: Custom-built, animated feedback system replacing native alerts for a smoother UX.
+- **✅ Secure Firestore Rules**: Production-ready security rules protecting user data.
+
+---
+
+## 🛠 Tech Stack
+
+- **Frontend**: React 18, Vite, Tailwind CSS, Framer Motion (animations), Lucide React (icons).
+- **Backend**: Node.js, Express.
+- **AI Engine**: Google Gemini AI (`@google/genai`).
+- **APIs**: OpenWeatherMap (Weather data), Nominatim (Reverse Geocoding).
+- **Database & Auth**: Firebase (Firestore, Authentication).
+- **Storage**: Browser LocalStorage (Session persistence & Offline cache).
+
+---
+
+## 🏗 Architecture Diagram
+
+The application follows a modern client-server architecture:
+
+1.  **Client (React)**: Handles UI, voice processing, image capture, and local state management.
+2.  **Server (Express)**: Acts as a secure proxy for AI and Weather APIs.
+3.  **AI Layer (Gemini)**: Processes multimodal inputs (images + text) to provide expert agricultural insights.
+4.  **Weather Layer (OpenWeatherMap)**: Provides real-time environmental context.
+
+---
+
+## ⚙️ Setup Instructions
+
+### Prerequisites
+- **Node.js**: v18.x or higher
+- **npm**: v9.x or higher
+- **API Keys**:
+    - [Google AI Studio Key](https://aistudio.google.com/) (for Gemini)
+    - [OpenWeatherMap Key](https://openweathermap.org/api) (for Weather)
+
+### 1. Clone the Repository
+```bash
+git clone <your-repo-url>
+cd agriassist-ai
+```
+
+### 2. Install Dependencies
+```bash
+# Install root and frontend dependencies
+npm install
+
+# Install backend dependencies
+cd backend
+npm install
+cd ..
+```
+
+### 3. Set Up Environment Variables
+Create a `.env` file in the root directory (refer to `.env.example`):
+```env
+GEMINI_API_KEY=your_gemini_key_here
+OPENWEATHER_API_KEY=your_weather_key_here
+FIREBASE_SERVICE_ACCOUNT_PATH=./serviceAccountKey.json # For backend token verification
+```
+
+You also need a `firebase-applet-config.json` file in the root directory for the frontend Firebase configuration:
+```json
+{
+  "apiKey": "your_api_key",
+  "authDomain": "your_auth_domain",
+  "projectId": "your_project_id",
+  "appId": "your_app_id",
+  "firestoreDatabaseId": "your_database_id",
+  "storageBucket": "your_storage_bucket"
+}
+```
+
+### 4. Run the Application
+The application is configured to run as a full-stack app where the backend serves the frontend.
+```bash
+npm run dev
+```
+The app will be available at `http://localhost:3000`.
+
+---
+
+## 🔑 Environment Variables
+
+| Variable | Description | Required |
+| :--- | :--- | :--- |
+| `GEMINI_API_KEY` | API key from Google AI Studio to power the diagnosis and chat. | Yes |
+| `OPENWEATHER_API_KEY` | API key from OpenWeatherMap for real-time temperature data. | Optional (Fallback to mock) |
+| `FIREBASE_SERVICE_ACCOUNT_PATH` | Path to the Firebase Admin SDK service account JSON file. | Yes (for backend Auth) |
+
+---
+
+## 📖 How It Works
+
+1.  **Analysis Flow**: When a user uploads an image, the frontend captures geolocation and weather data. This multimodal context (Image + Text + Location + Temp) is sent to the Gemini AI via the backend.
+2.  **Chat System**: The chat uses a persistent session state, allowing farmers to ask follow-up questions about their specific diagnosis.
+3.  **Offline Fallback**: If the network is lost, the app uses cached data and service workers to ensure the UI remains responsive and previously analyzed data is accessible.
+
+---
+
+## 🏆 Hackathon Track: Open Innovation – Smart Resource Allocation
+
+AgriAssist AI fits perfectly into the **Smart Resource Allocation** track by:
+- **Reducing Waste**: Precise disease/pest identification prevents over-application of pesticides and fertilizers.
+- **Optimizing Yield**: Timely advice helps farmers allocate their labor and resources to the most critical areas of their farm.
+- **Accessibility**: Voice and multilingual support ensure that advanced AI technology is accessible to farmers regardless of literacy or language barriers.
+
+---
+
+## 🚀 Future Enhancements
+- [ ] **Community Forum**: A space for farmers to share insights and local alerts.
+- [ ] **Marketplace Integration**: Direct links to purchase recommended organic treatments.
+- [ ] **Satellite Imagery**: Integration for large-scale farm health monitoring.
+
+---
+
+## 🤝 Contributing
+We welcome contributions! Please fork the repository and submit a pull request for any features or bug fixes.
+
+---
+
+## 📝 Maintaining This README
+**Whenever a new feature is added, please update the Features list and any relevant sections to keep the documentation current.**
+
+---
+
+## 📄 License
+This project is licensed under the **MIT License**.

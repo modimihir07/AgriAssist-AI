@@ -1,0 +1,9 @@
+{
+  "name": "AgriAssist AI",
+  "description": "A full-stack web application for farmers to detect crop diseases using Gemini AI, featuring a React frontend and a Node.js backend.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
