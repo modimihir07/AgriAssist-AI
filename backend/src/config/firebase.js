@@ -14,14 +14,14 @@ if (serviceAccountPath && fs.existsSync(serviceAccountPath)) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
-    console.log('Firebase Admin initialized successfully');
+    console.log('✅ Firebase Admin initialized successfully');
     isInitialized = true;
   } catch (error) {
-    console.error('Error initializing Firebase Admin:', error);
+    console.error('❌ Error initializing Firebase Admin:', error.message);
   }
-} else {
-  console.warn('FIREBASE_SERVICE_ACCOUNT_PATH not found or invalid. Firebase Admin not initialized.');
 }
 
 export const db = isInitialized ? admin.firestore() : null;
 export const auth = isInitialized ? admin.auth() : null;
+export const isFirebaseReady = isInitialized;
+

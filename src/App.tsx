@@ -492,6 +492,10 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (!auth) {
+      setIsAuthLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsAuthLoading(false);
@@ -500,6 +504,10 @@ export default function App() {
   }, []);
 
   const handleSignIn = async () => {
+    if (!auth || !googleProvider) {
+      showToast('Firebase is not configured. Sign-in is unavailable.');
+      return;
+    }
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
@@ -509,6 +517,7 @@ export default function App() {
   };
 
   const handleSignOut = async () => {
+    if (!auth) return;
     try {
       await signOut(auth);
     } catch (error) {
@@ -1447,7 +1456,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
       }, 10000);
 
       try {
-        const token = auth.currentUser ? await auth.currentUser.getIdToken() : 'demo-token-123';
+        const token = auth?.currentUser ? await auth.currentUser.getIdToken() : 'demo-token-123';
         const response = await fetch('/api/disease/detect', {
           method: 'POST',
           headers: {
@@ -1497,14 +1506,14 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
         setIsAnalyzing(false);
 
         // Save to Firestore
-        if (auth.currentUser) {
+        if (auth?.currentUser) {
           try {
             let finalImageUrl = previewUrl;
             
             // Upload to Firebase Storage if it's a base64 string
-            if (previewUrl && previewUrl.startsWith('data:image')) {
+            if (storage && previewUrl && previewUrl.startsWith('data:image')) {
               try {
-                const storageRef = ref(storage, `users/${auth.currentUser.uid}/analyses/${Date.now()}.jpg`);
+                const storageRef = ref(storage, `users/${auth!.currentUser!.uid}/analyses/${Date.now()}.jpg`);
                 await uploadString(storageRef, previewUrl, 'data_url');
                 finalImageUrl = await getDownloadURL(storageRef);
               } catch (storageError) {
@@ -1513,16 +1522,18 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
               }
             }
 
-            await addDoc(collection(db, `users/${auth.currentUser.uid}/analyses`), {
-              plantType: data.plantType,
-              disease: data.disease,
-              confidence: data.confidence,
-              remedies: data.remedies,
-              prevention: data.prevention,
-              timestamp: serverTimestamp(),
-              language: language,
-              imageUrl: finalImageUrl
-            });
+            if (db && auth?.currentUser) {
+              await addDoc(collection(db, `users/${auth.currentUser.uid}/analyses`), {
+                plantType: data.plantType,
+                disease: data.disease,
+                confidence: data.confidence,
+                remedies: data.remedies,
+                prevention: data.prevention,
+                timestamp: serverTimestamp(),
+                language: language,
+                imageUrl: finalImageUrl
+              });
+            }
           } catch (dbError) {
             console.error("Failed to save analysis to Firestore:", dbError);
           }
@@ -1598,7 +1609,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
         return;
       }
 
-      const token = auth.currentUser ? await auth.currentUser.getIdToken() : 'demo-token-123';
+      const token = auth?.currentUser ? await auth.currentUser.getIdToken() : 'demo-token-123';
       const response = await fetch('/api/disease/chat', {
         method: 'POST',
         headers: {
