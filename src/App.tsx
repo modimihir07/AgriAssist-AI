@@ -1448,12 +1448,11 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
         return;
       }
 
-      // Online analysis with timeout
+      // Online analysis with timeout — Gemini Vision needs 15-30s, so use 60s
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-        setIsSlowNetwork(true);
-      }, 10000);
+      }, 60000);
 
       try {
         const token = auth?.currentUser ? await auth.currentUser.getIdToken() : 'demo-token-123';
@@ -1540,7 +1539,10 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
         }
 
       } catch (err: any) {
-        if (err.name === 'AbortError' || !isOnline) {
+        if (err.name === 'AbortError') {
+          // Timed out after 60s
+          setError('Analysis timed out. The AI is taking too long. Please try again with a smaller image or check your connection.');
+        } else if (!isOnline) {
           const cached = checkCache();
           if (cached) {
             setResult(cached);
