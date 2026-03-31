@@ -492,10 +492,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!auth) {
-      setIsAuthLoading(false);
-      return;
-    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsAuthLoading(false);
@@ -504,10 +500,6 @@ export default function App() {
   }, []);
 
   const handleSignIn = async () => {
-    if (!auth || !googleProvider) {
-      showToast('Firebase is not configured. Sign-in is unavailable.');
-      return;
-    }
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
@@ -517,7 +509,6 @@ export default function App() {
   };
 
   const handleSignOut = async () => {
-    if (!auth) return;
     try {
       await signOut(auth);
     } catch (error) {
@@ -1448,14 +1439,15 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
         return;
       }
 
-      // Online analysis with timeout — Gemini Vision needs 15-30s, so use 60s
+      // Online analysis with timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-      }, 60000);
+        setIsSlowNetwork(true);
+      }, 10000);
 
       try {
-        const token = auth?.currentUser ? await auth.currentUser.getIdToken() : 'demo-token-123';
+        const token = auth.currentUser ? await auth.currentUser.getIdToken() : 'demo-token-123';
         const response = await fetch('/api/disease/detect', {
           method: 'POST',
           headers: {
@@ -1505,14 +1497,14 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
         setIsAnalyzing(false);
 
         // Save to Firestore
-        if (auth?.currentUser) {
+        if (auth.currentUser) {
           try {
             let finalImageUrl = previewUrl;
             
             // Upload to Firebase Storage if it's a base64 string
-            if (storage && previewUrl && previewUrl.startsWith('data:image')) {
+            if (previewUrl && previewUrl.startsWith('data:image')) {
               try {
-                const storageRef = ref(storage, `users/${auth!.currentUser!.uid}/analyses/${Date.now()}.jpg`);
+                const storageRef = ref(storage, `users/${auth.currentUser.uid}/analyses/${Date.now()}.jpg`);
                 await uploadString(storageRef, previewUrl, 'data_url');
                 finalImageUrl = await getDownloadURL(storageRef);
               } catch (storageError) {
@@ -1521,28 +1513,23 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
               }
             }
 
-            if (db && auth?.currentUser) {
-              await addDoc(collection(db, `users/${auth.currentUser.uid}/analyses`), {
-                plantType: data.plantType,
-                disease: data.disease,
-                confidence: data.confidence,
-                remedies: data.remedies,
-                prevention: data.prevention,
-                timestamp: serverTimestamp(),
-                language: language,
-                imageUrl: finalImageUrl
-              });
-            }
+            await addDoc(collection(db, `users/${auth.currentUser.uid}/analyses`), {
+              plantType: data.plantType,
+              disease: data.disease,
+              confidence: data.confidence,
+              remedies: data.remedies,
+              prevention: data.prevention,
+              timestamp: serverTimestamp(),
+              language: language,
+              imageUrl: finalImageUrl
+            });
           } catch (dbError) {
             console.error("Failed to save analysis to Firestore:", dbError);
           }
         }
 
       } catch (err: any) {
-        if (err.name === 'AbortError') {
-          // Timed out after 60s
-          setError('Analysis timed out. The AI is taking too long. Please try again with a smaller image or check your connection.');
-        } else if (!isOnline) {
+        if (err.name === 'AbortError' || !isOnline) {
           const cached = checkCache();
           if (cached) {
             setResult(cached);
@@ -1611,7 +1598,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
         return;
       }
 
-      const token = auth?.currentUser ? await auth.currentUser.getIdToken() : 'demo-token-123';
+      const token = auth.currentUser ? await auth.currentUser.getIdToken() : 'demo-token-123';
       const response = await fetch('/api/disease/chat', {
         method: 'POST',
         headers: {
@@ -1883,7 +1870,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                     </motion.button>
                     <motion.a 
                       whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                      href="https://github.com/modimihir07/AgriAssist-AI" 
+                      href="https://github.com" 
                       target="_blank" 
                       rel="noreferrer"
                       className="px-8 py-4 rounded-full bg-white/5 text-white font-bold text-lg hover:bg-white/10 transition-colors border border-white/10 flex items-center gap-2 cursor-pointer"
