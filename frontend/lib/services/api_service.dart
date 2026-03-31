@@ -6,7 +6,7 @@ import '../models/diagnosis.dart';
 import '../utils/constants.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://your-backend-url.com/api';
+  static const String baseUrl = AppConstants.baseUrl;
 
   Future<Diagnosis> detectDisease(File image) async {
     final user = FirebaseAuth.instance.currentUser;

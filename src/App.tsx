@@ -1899,7 +1899,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                     </motion.button>
                     <motion.a 
                       whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                      href="https://github.com" 
+                      href="https://github.com/modimihir07/AgriAssist-AI.git" 
                       target="_blank" 
                       rel="noreferrer"
                       className="px-8 py-4 rounded-full bg-white/5 text-white font-bold text-lg hover:bg-white/10 transition-colors border border-white/10 flex items-center gap-2 cursor-pointer"
