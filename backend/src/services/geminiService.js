@@ -13,48 +13,22 @@ const getDynamicMock = (imageBase64) => {
   return mockResults[hash];
 };
 
-const getValidKey = (...keys) => {
-  console.log(`[DEBUG] getValidKey checking keys: ${keys.join(', ')}`);
-  for (const key of keys) {
-    let val = process.env[key]?.trim();
-    if (val) {
-      const originalLength = val.length;
-      // Sanitize: Remove any non-ASCII characters that might have been accidentally pasted (e.g., bullet points)
-      val = val.replace(/[^\x00-\x7F]/g, "");
-      
-      console.log(`[DEBUG] Key found in ${key}. Original length: ${originalLength}, Sanitized length: ${val.length}. Preview: ${val.substring(0, 4)}...`);
-
-      if (val === 'your_actual_api_key_here' || val === 'MY_GEMINI_API_KEY') {
-        console.warn(`[DEBUG] Key in ${key} is a placeholder.`);
-        continue;
-      }
-
-      if (val.length < 10) {
-        console.warn(`[DEBUG] Key in ${key} is too short (length: ${val.length}).`);
-        continue;
-      }
-
-      console.log(`[DEBUG] Valid key found in ${key}.`);
-      return { key: val, source: key };
-    } else {
-      console.log(`[DEBUG] Key ${key} is not set.`);
+const getValidKey = () => {
+  let val = process.env.GEMINI_API_KEY?.trim();
+  if (val) {
+    val = val.replace(/[^\x00-\x7F]/g, "");
+    if (val === 'your_actual_api_key_here' || val === 'MY_GEMINI_API_KEY' || val.length < 10) {
+      return null;
     }
+    return { key: val, source: 'GEMINI_API_KEY' };
   }
-  console.warn(`[DEBUG] No valid key found in any of the checked environment variables.`);
   return null;
 };
 
 export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg", language = "en") => {
   let ai = null;
   try {
-    const keyInfo = getValidKey(
-      'GEMINI_API_KEY', 
-      'API_KEY', 
-      'GOOGLE_API_KEY', 
-      'GEMINI_KEY',
-      'AI_STUDIO_KEY',
-      'AGRIASSIST_KEY'
-    );
+    const keyInfo = getValidKey();
     
     if (keyInfo) {
       ai = new GoogleGenAI({ apiKey: keyInfo.key });
@@ -141,20 +115,22 @@ export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg
   } catch (apiError) {
     const errorMsg = apiError.message || "";
     let isQuotaError = false;
+    let errStr = "";
     
     // Check various ways the error might be structured
     try {
-      const errStr = typeof apiError === 'object' ? JSON.stringify(apiError) : String(apiError);
+      errStr = typeof apiError === 'object' ? JSON.stringify(apiError) : String(apiError);
       if (errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("429") || errStr.includes("quota exceeded")) {
         isQuotaError = true;
       }
     } catch (e) {
+      errStr = errorMsg;
       if (errorMsg.toLowerCase().includes("quota") || errorMsg.includes("429")) {
         isQuotaError = true;
       }
     }
 
-    if (errorMsg.includes("API key not valid")) {
+    if (errStr.includes("API key not valid") || errStr.includes("leaked") || errStr.includes("PERMISSION_DENIED") || errorMsg.includes("API key not valid") || errorMsg.includes("leaked") || errorMsg.includes("PERMISSION_DENIED")) {
       console.error("[DEBUG] Gemini API Key Error:", apiError);
       throw new Error("INVALID_API_KEY");
     }
@@ -182,14 +158,7 @@ export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg
 export const chatWithAgriBot = async (context, message, location, imageBase64, mimeType = "image/jpeg", language = "en") => {
   let ai = null;
   try {
-    const keyInfo = getValidKey(
-      'GEMINI_API_KEY', 
-      'API_KEY', 
-      'GOOGLE_API_KEY', 
-      'GEMINI_KEY',
-      'AI_STUDIO_KEY',
-      'AGRIASSIST_KEY'
-    );
+    const keyInfo = getValidKey();
     
     if (keyInfo) {
       ai = new GoogleGenAI({ apiKey: keyInfo.key });
@@ -281,21 +250,23 @@ export const chatWithAgriBot = async (context, message, location, imageBase64, m
   } catch (error) {
     const errorMsg = error.message || "";
     let isQuotaError = false;
+    let errStr = "";
 
     try {
-      const errStr = typeof error === 'object' ? JSON.stringify(error) : String(error);
+      errStr = typeof error === 'object' ? JSON.stringify(error) : String(error);
       if (errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("429") || errStr.includes("quota exceeded")) {
         isQuotaError = true;
       }
     } catch (e) {
+      errStr = errorMsg;
       if (errorMsg.toLowerCase().includes("quota") || errorMsg.includes("429")) {
         isQuotaError = true;
       }
     }
     
-    if (errorMsg.includes("API key not valid")) {
+    if (errStr.includes("API key not valid") || errStr.includes("leaked") || errStr.includes("PERMISSION_DENIED") || errorMsg.includes("API key not valid") || errorMsg.includes("leaked") || errorMsg.includes("PERMISSION_DENIED")) {
       console.error("[DEBUG] Chat API Key Error:", error);
-      return "The Gemini API Key provided is invalid. Please check your AI Studio Secrets and ensure you copied the key correctly.";
+      return "The Gemini API Key provided is invalid or has been reported as leaked. Please check your AI Studio Secrets and ensure you copied the key correctly.";
     }
     
     if (isQuotaError) {
@@ -309,14 +280,7 @@ export const chatWithAgriBot = async (context, message, location, imageBase64, m
 };
 
 export const testGeminiKey = async () => {
-  const keysToCheck = [
-    'GEMINI_API_KEY', 
-    'API_KEY', 
-    'GOOGLE_API_KEY', 
-    'GEMINI_KEY',
-    'AI_STUDIO_KEY',
-    'AGRIASSIST_KEY'
-  ];
+  const keysToCheck = ['GEMINI_API_KEY'];
   
   const keyStatus = {};
   try {
@@ -335,7 +299,7 @@ export const testGeminiKey = async () => {
       }
     }
 
-    const keyInfo = getValidKey(...keysToCheck);
+    const keyInfo = getValidKey();
     
     if (!keyInfo) {
       return { 

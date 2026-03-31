@@ -31,7 +31,7 @@ export const detectDisease = async (req, res) => {
   } catch (error) {
     console.error('Error in disease detection:', error);
     if (error.message === "INVALID_API_KEY") {
-      return res.status(401).json({ error: 'The Gemini API Key provided is invalid. Please check your AI Studio Secrets.' });
+      return res.status(401).json({ error: 'The Gemini API Key provided is invalid or has been reported as leaked. Please check your AI Studio Secrets.' });
     }
     res.status(500).json({ error: 'Failed to process image' });
   }
