@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
+import { analyzeImage, chatWithAgriBot, testGeminiKey } from './services/geminiService.js';
 import diseaseRoutes from './routes/diseaseRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
@@ -33,32 +34,32 @@ app.use('/api/weather', weatherRoutes);
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 // API Status check
-app.get('/api/status', (req, res) => {
-  const hasKey = !!(
-    process.env.GEMINI_API_KEY || 
-    process.env.API_KEY || 
-    process.env.GOOGLE_API_KEY || 
-    process.env.GEMINI_KEY ||
-    process.env.AI_STUDIO_KEY ||
-    process.env.AGRIASSIST_KEY
-  );
-  const isMock = process.env.MOCK_API === 'true';
-  res.json({ 
-    liveMode: hasKey && !isMock,
-    hasKey,
-    isMock
-  });
+app.get('/api/status', async (req, res) => {
+  try {
+    const testResult = await testGeminiKey();
+    const isMock = process.env.MOCK_API === 'true';
+    
+    res.json({ 
+      liveMode: testResult.success && !isMock,
+      hasKey: testResult.keyStatus?.GEMINI_KEY?.exists || testResult.keyStatus?.GEMINI_API_KEY?.exists || testResult.keyStatus?.API_KEY?.exists,
+      isValid: testResult.success,
+      keySource: testResult.keySource,
+      keyPreview: testResult.keyStatus?.[testResult.keySource]?.preview,
+      isMock,
+      error: testResult.error,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Debug endpoint
 app.get('/debug/env', (req, res) => {
   const keysToCheck = [
+    'GEMINI_KEY',
     'GEMINI_API_KEY', 
-    'API_KEY', 
-    'GOOGLE_API_KEY', 
-    'GEMINI_KEY', 
-    'AI_STUDIO_KEY', 
-    'AGRIASSIST_KEY',
+    'API_KEY',
     'MOCK_API',
     'NODE_ENV'
   ];

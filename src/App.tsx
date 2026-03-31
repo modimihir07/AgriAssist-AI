@@ -502,7 +502,11 @@ export default function App() {
   const handleSignIn = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+        console.log('Sign-in popup closed by user');
+        return;
+      }
       console.error('Error signing in:', error);
       showToast('Failed to sign in. Please try again.');
     }
@@ -1647,6 +1651,31 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
               </span>
               <span className="text-xs opacity-90">
                 {isOnline ? translations[language].slow_desc : translations[language].offline_desc}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* API Status Banner */}
+      <AnimatePresence>
+        {apiStatus && (apiStatus.isMock || !apiStatus.hasKey) && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="fixed top-0 w-full z-[100] bg-amber-600 text-white py-2 px-4 flex items-center justify-center gap-3 shadow-lg"
+            style={{ marginTop: (!isOnline || isSlowNetwork) ? '48px' : '0' }}
+          >
+            <AlertTriangle className="w-4 h-4 animate-pulse" />
+            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+              <span className="font-bold text-sm">
+                {apiStatus.isMock ? 'Gemini API: Demo Mode Active' : 'Gemini API: Configuration Required'}
+              </span>
+              <span className="text-xs opacity-90">
+                {apiStatus.isMock 
+                  ? 'The application is using simulated AI responses due to an invalid or leaked API key.' 
+                  : 'Please configure a valid GEMINI_API_KEY in your environment variables.'}
               </span>
             </div>
           </motion.div>

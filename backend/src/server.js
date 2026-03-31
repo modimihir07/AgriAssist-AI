@@ -28,7 +28,7 @@ async function startServer() {
     console.log(`AgriAssist AI Backend & Project Hub running on http://localhost:${PORT}`);
     
     // Log environment status for debugging
-    const keysToCheck = ['API_KEY', 'GEMINI_API_KEY', 'MOCK_API', 'NODE_ENV'];
+    const keysToCheck = ['GEMINI_KEY', 'GEMINI_API_KEY', 'API_KEY', 'MOCK_API', 'NODE_ENV'];
     console.log('--- Environment Status ---');
     keysToCheck.forEach(key => {
       const value = process.env[key];

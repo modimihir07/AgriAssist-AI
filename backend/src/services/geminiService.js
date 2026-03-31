@@ -13,38 +13,106 @@ const getDynamicMock = (imageBase64) => {
   return mockResults[hash];
 };
 
+const sanitizeKey = (val) => {
+  if (!val) return "";
+  let clean = val.trim();
+  // Remove surrounding quotes
+  clean = clean.replace(/^["']|["']$/g, "");
+  // Remove accidental prefixes
+  clean = clean.replace(/^(GEMINI_KEY|GEMINI_API_KEY|API_KEY)\s*=\s*/i, "");
+  clean = clean.replace(/^(Bearer|key)\s+/i, "");
+  // Remove all whitespace
+  clean = clean.replace(/\s/g, "");
+  return clean;
+};
+
+const isPlaceholder = (k) => {
+  if (!k) return true;
+  const val = sanitizeKey(k);
+  
+  if (val.startsWith('AIza') && val.length >= 35) return false;
+
+  const placeholders = [
+    'your_actual_api_key_here',
+    'MY_GEMINI_API_KEY',
+    'your_gemini_api_key',
+    'YOUR_GEMINI_API_KEY',
+    'ENTER_YOUR_KEY',
+    'your_key_here',
+    'placeholder',
+    'null',
+    'undefined',
+    'TODO_KEYHERE',
+    'TODO',
+    'INSERT_KEY',
+    'REPLACE_ME',
+    'API_KEY',
+    'GEMINI_API_KEY',
+    'GEMINI_KEY'
+  ];
+  
+  const isGeneric = placeholders.some(p => val.toLowerCase().includes(p.toLowerCase()));
+  const isTooShort = val.length < 20;
+  const startsWithYour = val.toLowerCase().startsWith('your_');
+  const isAllStars = /^[\*]+$/.test(val);
+  const hasBrackets = val.includes('<') || val.includes('>') || val.includes('{') || val.includes('}');
+  
+  return isGeneric || isTooShort || startsWithYour || isAllStars || hasBrackets;
+};
+
+let cachedWorkingKey = null;
+
 const getValidKey = () => {
-  let val = process.env.GEMINI_API_KEY?.trim();
-  if (val) {
-    val = val.replace(/[^\x00-\x7F]/g, "");
-    if (val === 'your_actual_api_key_here' || val === 'MY_GEMINI_API_KEY' || val.length < 10) {
-      return null;
+  if (cachedWorkingKey) return cachedWorkingKey;
+
+  const keysToCheck = ['GEMINI_KEY', 'GEMINI_API_KEY', 'API_KEY'];
+  let val = null;
+  let source = null;
+
+  for (const key of keysToCheck) {
+    const k = process.env[key]?.trim();
+    if (k && !isPlaceholder(k)) {
+      val = k;
+      source = key;
+      break;
     }
-    return { key: val, source: 'GEMINI_API_KEY' };
   }
-  return null;
+
+  if (!val) {
+    console.warn(`[DEBUG] No valid API key found in ${keysToCheck.join(', ')}.`);
+    throw new Error("API key is not set or contains a placeholder value.");
+  }
+
+  const originalVal = val;
+  val = sanitizeKey(val);
+  
+  if (val !== originalVal) {
+    console.log(`[DEBUG] API key sanitized. Original length: ${originalVal.length}, Sanitized length: ${val.length}`);
+  }
+  
+  console.log(`[DEBUG] Valid API key candidate found. Source: ${source}. Preview: ${val.substring(0, 4)}...${val.substring(val.length - 4)}`);
+  return { key: val, source };
 };
 
 export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg", language = "en") => {
+  if (process.env.MOCK_API === 'true') {
+    console.log("[DEBUG] Using Mock Data (MOCK_API is explicitly true)");
+    return getDynamicMock(imageBase64);
+  }
+
   let ai = null;
   try {
     const keyInfo = getValidKey();
-    
-    if (keyInfo) {
-      ai = new GoogleGenAI({ apiKey: keyInfo.key });
-      console.log(`[DEBUG] Gemini AI Initialized successfully. Key Source: ${keyInfo.source}. Key length: ${keyInfo.key.length}. Preview: ${keyInfo.key.substring(0, 4)}...${keyInfo.key.substring(keyInfo.key.length - 4)}`);
-    } else {
-      const rawKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-      console.warn(`[DEBUG] Gemini API Key is missing or invalid. Raw key length: ${rawKey?.length || 0}. Falling back to mock data.`);
-    }
+    ai = new GoogleGenAI({ apiKey: keyInfo.key });
+    console.log(`[DEBUG] Gemini AI Initialized successfully. Key Source: ${keyInfo.source}.`);
   } catch (e) {
-    console.error("Gemini AI Initialization Error:", e);
-  }
-
-  // Bypass MOCK_API if we have a valid AI instance
-  if ((process.env.MOCK_API === 'true' && !ai) || !ai) {
-    console.log("[DEBUG] Using Mock Data (MOCK_API is true or AI not initialized)");
-    return getDynamicMock(imageBase64);
+    console.error(`[DEBUG] Gemini AI Initialization Error: ${e.message}`);
+    console.warn("[DEBUG] Falling back to mock data due to initialization error.");
+    return {
+      ...getDynamicMock(imageBase64),
+      isMock: true,
+      message: `AI Initialization Failed: ${e.message}. Showing simulated results.`
+    };
   }
 
   let locationContext = "";
@@ -73,42 +141,62 @@ export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg
   `;
 
   try {
-    // Sanitize imageBase64: Ensure it only contains valid base64 characters
-    // This prevents TypeErrors if non-ASCII characters snuck into the string
     const sanitizedBase64 = (imageBase64 || "").replace(/[^\x00-\x7F]/g, "");
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
-      contents: {
-        parts: [
-          { text: prompt },
-          {
-            inlineData: {
-              data: sanitizedBase64,
-              mimeType: mimeType
+    const callApi = async (genAi) => {
+      return await genAi.models.generateContent({
+        model: "gemini-3.1-flash-lite-preview",
+        contents: {
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                data: sanitizedBase64,
+                mimeType: mimeType
+              }
             }
+          ]
+        },
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              plantType: { type: Type.STRING, description: "The name of the plant or crop. Empty if not a plant." },
+              disease: { type: Type.STRING, description: "The name of the disease, or 'Healthy'. Empty if not a plant." },
+              confidence: { type: Type.NUMBER, description: "Confidence score for disease detection between 0 and 1." },
+              remedies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of remedies for the disease. Empty if healthy or not a plant." },
+              prevention: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of prevention methods. Empty if not a plant." },
+              pestName: { type: Type.STRING, description: "The name of any detected insect or pest. Empty if none detected." },
+              pestRemedies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of remedies or treatments specifically for the detected pest. Empty if none." },
+              pestConfidence: { type: Type.NUMBER, description: "Confidence score for pest detection between 0 and 1." },
+              isClear: { type: Type.BOOLEAN, description: "True ONLY if the image clearly shows a plant, crop, leaf, fruit, or vegetable. False otherwise." }
+            },
+            required: ["plantType", "disease", "confidence", "remedies", "prevention", "isClear", "pestName", "pestRemedies"]
           }
-        ]
-      },
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            plantType: { type: Type.STRING, description: "The name of the plant or crop. Empty if not a plant." },
-            disease: { type: Type.STRING, description: "The name of the disease, or 'Healthy'. Empty if not a plant." },
-            confidence: { type: Type.NUMBER, description: "Confidence score for disease detection between 0 and 1." },
-            remedies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of remedies for the disease. Empty if healthy or not a plant." },
-            prevention: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of prevention methods. Empty if not a plant." },
-            pestName: { type: Type.STRING, description: "The name of any detected insect or pest. Empty if none detected." },
-            pestRemedies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of remedies or treatments specifically for the detected pest. Empty if none." },
-            pestConfidence: { type: Type.NUMBER, description: "Confidence score for pest detection between 0 and 1." },
-            isClear: { type: Type.BOOLEAN, description: "True ONLY if the image clearly shows a plant, crop, leaf, fruit, or vegetable. False otherwise." }
-          },
-          required: ["plantType", "disease", "confidence", "remedies", "prevention", "isClear", "pestName", "pestRemedies"]
         }
+      });
+    };
+
+    let response;
+    try {
+      response = await callApi(ai);
+    } catch (firstError) {
+      const errStr = String(firstError);
+      if (errStr.includes("API key not valid") || errStr.includes("INVALID_ARGUMENT") || errStr.includes("PERMISSION_DENIED")) {
+        console.warn("[DEBUG] API Key error detected. Re-validating keys...");
+        const retest = await testGeminiKey();
+        if (retest.success) {
+          console.log("[DEBUG] Found working key. Retrying API call...");
+          const newAi = new GoogleGenAI({ apiKey: cachedWorkingKey.key });
+          response = await callApi(newAi);
+        } else {
+          throw firstError;
+        }
+      } else {
+        throw firstError;
       }
-    });
+    }
     
     console.log("[DEBUG] Gemini API Analysis call succeeded.");
     return JSON.parse(response.text.trim());
@@ -132,7 +220,12 @@ export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg
 
     if (errStr.includes("API key not valid") || errStr.includes("leaked") || errStr.includes("PERMISSION_DENIED") || errorMsg.includes("API key not valid") || errorMsg.includes("leaked") || errorMsg.includes("PERMISSION_DENIED")) {
       console.error("[DEBUG] Gemini API Key Error:", apiError);
-      throw new Error("INVALID_API_KEY");
+      console.warn("[DEBUG] Falling back to mock data due to invalid/leaked API key.");
+      return {
+        ...getDynamicMock(imageBase64),
+        isMock: true,
+        message: "API Key is invalid or leaked. Showing simulated results."
+      };
     }
     
     if (isQuotaError) {
@@ -148,7 +241,7 @@ export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg
     console.error("[DEBUG] Gemini API Analysis Error:", apiError);
 
     // Fallback to dynamic mock data if API fails and no key is provided
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_actual_api_key_here') {
+    if (process.env.MOCK_API === 'true') {
       return getDynamicMock(imageBase64);
     }
     throw new Error(`AI Analysis Failed: ${apiError.message}`);
@@ -156,25 +249,19 @@ export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg
 };
 
 export const chatWithAgriBot = async (context, message, location, imageBase64, mimeType = "image/jpeg", language = "en") => {
+  if (process.env.MOCK_API === 'true') {
+    console.log("[DEBUG] Chat Using Mock Mode (MOCK_API is explicitly true)");
+    return "I am AgriBot (Mock Mode). To get real AI responses, please configure a valid Gemini API Key. In the meantime, I recommend following standard agricultural practices for your crop.";
+  }
+
   let ai = null;
   try {
     const keyInfo = getValidKey();
-    
-    if (keyInfo) {
-      ai = new GoogleGenAI({ apiKey: keyInfo.key });
-      console.log(`[DEBUG] AgriBot Chat Initialized successfully. Key Source: ${keyInfo.source}. Key length: ${keyInfo.key.length}. Preview: ${keyInfo.key.substring(0, 4)}...${keyInfo.key.substring(keyInfo.key.length - 4)}`);
-    } else {
-      const rawKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-      console.warn(`[DEBUG] AgriBot Chat Key is missing or invalid. Raw key length: ${rawKey?.length || 0}. Falling back to mock data.`);
-    }
+    ai = new GoogleGenAI({ apiKey: keyInfo.key });
+    console.log(`[DEBUG] AgriBot Chat Initialized successfully. Key Source: ${keyInfo.source}.`);
   } catch (e) {
-    console.error("AgriBot Chat Initialization Error:", e);
-  }
-
-  // Bypass MOCK_API if we have a valid AI instance
-  if ((process.env.MOCK_API === 'true' && !ai) || !ai) {
-    console.log("[DEBUG] Chat Using Mock Mode (MOCK_API is true or AI not initialized)");
-    return "I am AgriBot (Mock Mode). To get real AI responses, please configure a valid Gemini API Key. In the meantime, I recommend following standard agricultural practices for your crop.";
+    console.error(`[DEBUG] AgriBot Chat Initialization Error: ${e.message}`);
+    return `I am AgriBot (Mock Mode). AI Initialization Failed: ${e.message}. Please configure a valid Gemini API Key.`;
   }
 
   let locationContext = "";
@@ -222,7 +309,7 @@ export const chatWithAgriBot = async (context, message, location, imageBase64, m
   
   Provide a helpful, concise, and scientifically accurate response (max 3-4 sentences). If the user asks about the image, refer to the provided image.`;
 
-  try {
+  const makeApiCall = async (currentAi) => {
     // Sanitize imageBase64: Ensure it only contains valid base64 characters
     const sanitizedBase64 = imageBase64 ? imageBase64.replace(/[^\x00-\x7F]/g, "") : null;
 
@@ -241,12 +328,16 @@ export const chatWithAgriBot = async (context, message, location, imageBase64, m
       });
     }
 
-    const response = await ai.models.generateContent({
+    const response = await currentAi.models.generateContent({
       model: "gemini-3.1-flash-lite-preview",
       contents: contents
     });
     console.log("[DEBUG] AgriBot Chat API call succeeded.");
     return response.text;
+  };
+
+  try {
+    return await makeApiCall(ai);
   } catch (error) {
     const errorMsg = error.message || "";
     let isQuotaError = false;
@@ -263,10 +354,29 @@ export const chatWithAgriBot = async (context, message, location, imageBase64, m
         isQuotaError = true;
       }
     }
-    
-    if (errStr.includes("API key not valid") || errStr.includes("leaked") || errStr.includes("PERMISSION_DENIED") || errorMsg.includes("API key not valid") || errorMsg.includes("leaked") || errorMsg.includes("PERMISSION_DENIED")) {
-      console.error("[DEBUG] Chat API Key Error:", error);
-      return "The Gemini API Key provided is invalid or has been reported as leaked. Please check your AI Studio Secrets and ensure you copied the key correctly.";
+
+    const isKeyError = errStr.includes("API key not valid") || 
+                       errStr.includes("leaked") || 
+                       errStr.includes("PERMISSION_DENIED") || 
+                       errStr.includes("API_KEY_INVALID") ||
+                       errorMsg.includes("API key not valid") || 
+                       errorMsg.includes("leaked") || 
+                       errorMsg.includes("PERMISSION_DENIED");
+
+    if (isKeyError) {
+      console.warn("[DEBUG] Chat API Key Error detected. Attempting to find a working key...");
+      const status = await testGeminiKey();
+      if (status.isValid && status.workingKey) {
+        console.log("[DEBUG] Found a working key. Retrying Chat API call...");
+        const newAi = new GoogleGenAI({ apiKey: status.workingKey });
+        try {
+          return await makeApiCall(newAi);
+        } catch (retryError) {
+          console.error("[DEBUG] Chat Retry failed:", retryError.message);
+        }
+      }
+      
+      return "The Gemini API Key provided is invalid or has been reported as leaked. Please check your AI Studio Secrets and ensure you have configured a fresh API key. This usually happens when a key is accidentally committed to a public repository.";
     }
     
     if (isQuotaError) {
@@ -280,55 +390,83 @@ export const chatWithAgriBot = async (context, message, location, imageBase64, m
 };
 
 export const testGeminiKey = async () => {
-  const keysToCheck = ['GEMINI_API_KEY'];
-  
+  const keysToCheck = ['GEMINI_KEY', 'GEMINI_API_KEY', 'API_KEY'];
   const keyStatus = {};
-  try {
-    for (const key of keysToCheck) {
-      const val = process.env[key];
-      if (val) {
-        const sanitized = val.trim().replace(/[^\x00-\x7F]/g, "");
-        keyStatus[key] = {
-          exists: true,
-          originalLength: val.length,
-          sanitizedLength: sanitized.length,
-          preview: sanitized.length > 8 ? `${sanitized.substring(0, 4)}...${sanitized.substring(sanitized.length - 4)}` : "too short"
-        };
-      } else {
-        keyStatus[key] = { exists: false };
-      }
-    }
+  let workingKeyInfo = null;
+  let lastError = null;
 
-    const keyInfo = getValidKey();
-    
-    if (!keyInfo) {
-      return { 
-        success: false, 
-        error: "No valid API key found in environment variables.",
-        keyStatus
+  for (const keyName of keysToCheck) {
+    const val = process.env[keyName];
+    if (val) {
+      const sanitized = sanitizeKey(val);
+      const placeholder = isPlaceholder(sanitized);
+      
+      keyStatus[keyName] = {
+        exists: true,
+        originalLength: val.length,
+        sanitizedLength: sanitized.length,
+        preview: sanitized.length > 8 ? `${sanitized.substring(0, 4)}...${sanitized.substring(sanitized.length - 4)}` : "too short",
+        isPlaceholder: placeholder
       };
+
+      if (!placeholder && !workingKeyInfo) {
+        try {
+          const ai = new GoogleGenAI({ apiKey: sanitized });
+          const response = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: "Hello, this is a test message to verify the API key."
+          });
+          
+          if (response && response.text) {
+            workingKeyInfo = { key: sanitized, source: keyName };
+            cachedWorkingKey = workingKeyInfo;
+            keyStatus[keyName].isValid = true;
+          }
+        } catch (error) {
+          console.error(`[DEBUG] Test Key Error for ${keyName}:`, error.message);
+          keyStatus[keyName].isValid = false;
+          keyStatus[keyName].error = error.message;
+          lastError = error;
+        }
+      }
+    } else {
+      keyStatus[keyName] = { exists: false };
     }
+  }
 
-    const ai = new GoogleGenAI({ apiKey: keyInfo.key });
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
-      contents: "Hello, this is a test message to verify the API key."
-    });
-
-    return { 
-      success: true, 
-      message: response.text,
-      keySource: keyInfo.source,
-      keyLength: keyInfo.key.length,
+  if (workingKeyInfo) {
+    return {
+      success: true,
+      message: "API key is working correctly.",
+      keySource: workingKeyInfo.source,
+      keyLength: workingKeyInfo.key.length,
       keyStatus
     };
-  } catch (error) {
-    console.error("[DEBUG] Test Key Error:", error);
-    return { 
-      success: false, 
-      error: error.message,
-      details: error.stack,
-      keyStatus: typeof keyStatus !== 'undefined' ? keyStatus : {}
-    };
   }
-}
+
+  // If no key worked, try to provide a helpful error message
+  let friendlyError = "No valid API key found.";
+  if (lastError) {
+    const errorMsg = lastError.message || "";
+    let errStr = "";
+    try {
+      errStr = typeof lastError === 'object' ? JSON.stringify(lastError) : String(lastError);
+    } catch (e) {
+      errStr = errorMsg;
+    }
+
+    if (errStr.includes("PERMISSION_DENIED") || errStr.includes("leaked")) {
+      friendlyError = "API Key Leaked: The provided API key has been reported as leaked and cannot be used. Please generate a new key in AI Studio.";
+    } else if (errStr.includes("INVALID_API_KEY") || errStr.includes("API key not valid") || errStr.includes("INVALID_ARGUMENT")) {
+      friendlyError = "Invalid API Key: The provided key is not recognized by Google Gemini API. Please ensure you have copied the full key correctly.";
+    } else {
+      friendlyError = errorMsg;
+    }
+  }
+
+  return {
+    success: false,
+    error: friendlyError,
+    keyStatus
+  };
+};
