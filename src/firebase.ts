@@ -2,7 +2,6 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import firebaseConfig from '../firebase-applet-config.json';
 
 // Get Firebase config from environment variables
 const firebaseConfig = {
@@ -12,12 +11,10 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  // Only include if you have a specific Firestore database ID
-  // firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID,
 };
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app);  // Remove the extra parameter – it's not needed unless you have a custom database ID
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
