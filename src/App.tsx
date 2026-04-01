@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import * as htmlToImage from 'html-to-image';
 import { 
   Leaf, Smartphone, Server, Database, Github, CheckCircle2, 
   AlertCircle, Camera, ShieldCheck, Globe, Upload, 
@@ -1242,18 +1243,117 @@ export default function App() {
   const handleShare = async () => {
     if (!result) return;
     
-    const shareText = `AgriAssist AI Analysis:
+    const shareText = `AgriAssist AI Analysis Report
+Generated: ${new Date().toLocaleString()}
+
 Plant: ${result.plantType}
 Disease: ${result.disease}
 Confidence: ${(result.confidence * 100).toFixed(1)}%
+${userLocation ? `\nLocation: ${userLocation.name || `Lat: ${userLocation.lat.toFixed(4)}, Lng: ${userLocation.lng.toFixed(4)}`}` : ''}${currentTemperature !== null ? `\nTemperature: ${currentTemperature}°C` : ''}${(result as any).soilFertilityLevel ? `\n\nSoil Fertility: ${(result as any).soilFertilityLevel}\n${(result as any).soilFertilityRecommendations}` : ''}
 
 Remedies:
 ${result.remedies.map(r => `- ${r}`).join('\n')}
 
 Prevention:
 ${result.prevention.map(p => `- ${p}`).join('\n')}
-`;
+`.trim();
 
+    const downloadFile = (blob: Blob, filename: string) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    let pngBlob: Blob | null = null;
+
+    try {
+      const reportElement = document.getElementById('analysis-report');
+      if (reportElement) {
+        // Temporarily show the report title for the screenshot
+        const titleElement = reportElement.querySelector('[data-html2canvas-show]');
+        if (titleElement) {
+          titleElement.classList.remove('hidden');
+        }
+
+        pngBlob = await htmlToImage.toBlob(reportElement, {
+          backgroundColor: '#1A1F1C', // Match the container background
+          pixelRatio: 2, // Higher resolution
+          filter: (node) => {
+            if (node instanceof HTMLElement && node.hasAttribute('data-html2canvas-ignore')) {
+              return false;
+            }
+            return true;
+          }
+        });
+
+        // Hide the title again
+        if (titleElement) {
+          titleElement.classList.add('hidden');
+        }
+      }
+    } catch (error) {
+      console.error('Error generating image report:', error);
+    }
+
+    // 1. Try to share the generated PNG file
+    if (pngBlob) {
+      const file = new File([pngBlob], `AgriAssist_Report_${Date.now()}.png`, { type: 'image/png' });
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: 'AgriAssist AI Analysis Report',
+            text: 'Check out this crop analysis report from AgriAssist AI.',
+            files: [file],
+          });
+          showToast(translations[language].share_success || 'Shared successfully!');
+          return;
+        } catch (error: any) {
+          if (error.name === 'AbortError') return;
+          console.error('Error sharing file:', error);
+        }
+      }
+    }
+
+    // 2. Fallback: Generate a plain text file (.txt)
+    const txtBlob = new Blob([shareText], { type: 'text/plain' });
+    const txtFile = new File([txtBlob], `AgriAssist_Report_${Date.now()}.txt`, { type: 'text/plain' });
+
+    if (navigator.canShare && navigator.canShare({ files: [txtFile] })) {
+      try {
+        await navigator.share({
+          title: 'AgriAssist AI Analysis Report',
+          text: 'Check out this crop analysis report from AgriAssist AI.',
+          files: [txtFile],
+        });
+        showToast(translations[language].share_success || 'Shared successfully!');
+        return;
+      } catch (error: any) {
+        if (error.name === 'AbortError') return;
+        console.error('Error sharing TXT file:', error);
+      }
+    } else {
+      // 3. If file sharing is not possible at all, fall back to downloading the file
+      try {
+        if (pngBlob) {
+          downloadFile(pngBlob, `AgriAssist_Report_${Date.now()}.png`);
+          showToast('Report downloaded successfully!');
+        } else {
+          downloadFile(txtBlob, `AgriAssist_Report_${Date.now()}.txt`);
+          showToast('Text report downloaded successfully!');
+        }
+        return;
+      } catch (downloadError) {
+        console.error('Error downloading file:', downloadError);
+      }
+    }
+
+    // Ultimate Fallback: Just share text or copy to clipboard
     if (navigator.share) {
       try {
         await navigator.share({
@@ -1261,8 +1361,9 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
           text: shareText,
         });
         showToast(translations[language].share_success || 'Shared successfully!');
-      } catch (error) {
-        console.error('Error sharing:', error);
+      } catch (error: any) {
+        if (error.name === 'AbortError') return;
+        console.error('Error sharing text:', error);
       }
     } else {
       try {
@@ -1385,6 +1486,8 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
               "Rotate crops every year.",
               "Use mulch to prevent soil splashing."
             ],
+            soilFertilityLevel: "Medium",
+            soilFertilityRecommendations: "Consider adding organic compost and a balanced NPK fertilizer to support fruit development.",
             isOfflineMock: true
           },
           {
@@ -1401,6 +1504,8 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
               "Eradicate volunteer wheat which can harbor the disease.",
               "Adjust planting dates if possible."
             ],
+            soilFertilityLevel: "High",
+            soilFertilityRecommendations: "The soil appears well-suited for wheat, but ensure adequate nitrogen levels during the growing season.",
             isOfflineMock: true
           },
           {
@@ -1417,6 +1522,8 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
               "Practice crop rotation.",
               "Tillage to bury infected crop residue."
             ],
+            soilFertilityLevel: "High",
+            soilFertilityRecommendations: "Corn is a heavy feeder; maintain high nitrogen levels and consider side-dressing with urea if leaves yellow.",
             isOfflineMock: true
           }
         ];
@@ -1462,6 +1569,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
             imageBase64: base64data,
             mimeType: mimeType,
             location: currentLocation,
+            temperature: currentTemperature,
             language: language
           }),
           signal: controller.signal
@@ -2110,8 +2218,8 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                 </div>
 
                 {/* Results Section */}
-                <div className="bg-[#1A1F1C] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div id="analysis-report" className="bg-[#1A1F1C] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6" data-html2canvas-ignore>
                     <h3 className="text-lg font-bold text-white flex items-center gap-2 shrink-0">
                       <Activity className="w-5 h-5 text-emerald-400" /> {translations[language].results_title || "Analysis Results"}
                     </h3>
@@ -2124,6 +2232,30 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                         <Share2 className="w-4 h-4" />
                         <span>{translations[language].share_results || "Share"}</span>
                       </button>
+                    )}
+                  </div>
+                  
+                  {/* Title for the report (only visible in canvas) */}
+                  <div className="hidden" data-html2canvas-show>
+                    <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+                      <div className="bg-gradient-to-br from-emerald-400 to-green-600 p-2 rounded-xl">
+                        <Leaf className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-white">AgriAssist<span className="text-emerald-400">.AI</span> Report</h2>
+                        <p className="text-xs text-slate-400">{new Date().toLocaleString()}</p>
+                      </div>
+                    </div>
+                    {previewUrl && (
+                      <div className="mb-6 rounded-2xl overflow-hidden h-64 bg-black/50 border border-white/10 flex items-center justify-center">
+                        <img src={previewUrl} alt="Analyzed Crop" className="max-w-full max-h-full object-contain" referrerPolicy="no-referrer" />
+                      </div>
+                    )}
+                    {(result as any)?.soilFertilityLevel && (
+                      <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                        <h4 className="text-amber-400 font-bold mb-2">Soil Fertility: {(result as any).soilFertilityLevel}</h4>
+                        <p className="text-slate-300 text-sm">{(result as any).soilFertilityRecommendations}</p>
+                      </div>
                     )}
                   </div>
 
@@ -2316,6 +2448,36 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                               </div>
                             )}
                           </div>
+
+                          {/* Soil Fertility Section */}
+                          {result.soilFertilityLevel && (
+                            <div className="pt-4 border-t border-white/5 mt-4">
+                              <div className="space-y-4">
+                                <div>
+                                  <h5 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                                    <Sprout className="w-4 h-4 text-emerald-400" /> Soil Fertility & Recommendations
+                                  </h5>
+                                  <div className={`text-sm p-4 rounded-xl border leading-relaxed ${
+                                    result.soilFertilityLevel?.toLowerCase() === 'high' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-100' :
+                                    result.soilFertilityLevel?.toLowerCase() === 'medium' ? 'bg-amber-500/10 border-amber-500/20 text-amber-100' :
+                                    result.soilFertilityLevel?.toLowerCase() === 'low' ? 'bg-red-500/10 border-red-500/20 text-red-100' :
+                                    'bg-slate-500/10 border-slate-500/20 text-slate-300'
+                                  }`}>
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="font-bold uppercase tracking-wider text-xs opacity-80">Level:</span>
+                                      <span className={`font-bold ${
+                                        result.soilFertilityLevel?.toLowerCase() === 'high' ? 'text-emerald-400' :
+                                        result.soilFertilityLevel?.toLowerCase() === 'medium' ? 'text-amber-400' :
+                                        result.soilFertilityLevel?.toLowerCase() === 'low' ? 'text-red-400' :
+                                        'text-slate-400'
+                                      }`}>{result.soilFertilityLevel}</span>
+                                    </div>
+                                    <p className="opacity-90">{result.soilFertilityRecommendations}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </>
                       )}
                     </motion.div>

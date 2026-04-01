@@ -11,7 +11,7 @@ export const testKey = async (req, res) => {
 };
 
 export const detectDisease = async (req, res) => {
-  const { imageBase64, mimeType, location, language } = req.body;
+  const { imageBase64, mimeType, location, temperature, language } = req.body;
   const userId = req.user?.uid || 'anonymous';
 
   if (!imageBase64) {
@@ -19,7 +19,7 @@ export const detectDisease = async (req, res) => {
   }
 
   try {
-    const diagnosis = await analyzeImage(imageBase64, location, mimeType, language);
+    const diagnosis = await analyzeImage(imageBase64, location, temperature, mimeType, language);
 
     if (!diagnosis.isClear) {
       return res.status(422).json({ 

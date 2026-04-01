@@ -2,11 +2,11 @@ import { GoogleGenAI, Type } from "@google/genai";
 
 const getDynamicMock = (imageBase64) => {
   const mockResults = [
-    { plantType: "Tomato", disease: "Early Blight", confidence: 0.92, remedies: ["Remove infected leaves", "Apply copper-based fungicide"], prevention: ["Rotate crops", "Ensure good air circulation"], isClear: true, isMock: true, pestName: "Aphids", pestRemedies: ["Spray with neem oil", "Introduce ladybugs"], pestConfidence: 0.85 },
-    { plantType: "Wheat", disease: "Leaf Rust", confidence: 0.88, remedies: ["Apply triazole fungicides", "Monitor spread"], prevention: ["Plant resistant varieties", "Clear volunteer wheat"], isClear: true, isMock: true, pestName: "", pestRemedies: [], pestConfidence: 0 },
-    { plantType: "Apple", disease: "Apple Scab", confidence: 0.95, remedies: ["Apply captan or myclobutanil", "Remove fallen leaves"], prevention: ["Prune trees for airflow", "Plant resistant varieties"], isClear: true, isMock: true, pestName: "Codling Moth", pestRemedies: ["Use pheromone traps", "Apply granulosis virus"], pestConfidence: 0.78 },
-    { plantType: "Corn", disease: "Healthy", confidence: 0.98, remedies: [], prevention: ["Maintain regular watering", "Monitor for pests"], isClear: true, isMock: true, pestName: "Corn Borer", pestRemedies: ["Apply Bacillus thuringiensis (Bt)", "Remove infested stalks"], pestConfidence: 0.92 },
-    { plantType: "Potato", disease: "Late Blight", confidence: 0.91, remedies: ["Apply chlorothalonil", "Destroy infected plants"], prevention: ["Use certified seed", "Hilling to protect tubers"], isClear: true, isMock: true, pestName: "Colorado Potato Beetle", pestRemedies: ["Handpick beetles", "Apply spinosad"], pestConfidence: 0.89 }
+    { plantType: "Tomato", disease: "Early Blight", confidence: 0.92, remedies: ["Remove infected leaves", "Apply copper-based fungicide"], prevention: ["Rotate crops", "Ensure good air circulation"], isClear: true, isMock: true, pestName: "Aphids", pestRemedies: ["Spray with neem oil", "Introduce ladybugs"], pestConfidence: 0.85, soilFertilityLevel: "Medium", soilFertilityRecommendations: "Consider adding organic compost and a balanced NPK fertilizer to support fruit development." },
+    { plantType: "Wheat", disease: "Leaf Rust", confidence: 0.88, remedies: ["Apply triazole fungicides", "Monitor spread"], prevention: ["Plant resistant varieties", "Clear volunteer wheat"], isClear: true, isMock: true, pestName: "", pestRemedies: [], pestConfidence: 0, soilFertilityLevel: "High", soilFertilityRecommendations: "The soil appears well-suited for wheat, but ensure adequate nitrogen levels during the growing season." },
+    { plantType: "Apple", disease: "Apple Scab", confidence: 0.95, remedies: ["Apply captan or myclobutanil", "Remove fallen leaves"], prevention: ["Prune trees for airflow", "Plant resistant varieties"], isClear: true, isMock: true, pestName: "Codling Moth", pestRemedies: ["Use pheromone traps", "Apply granulosis virus"], pestConfidence: 0.78, soilFertilityLevel: "Medium", soilFertilityRecommendations: "Apple trees benefit from well-drained soil. Apply a layer of mulch to retain moisture and add a fruit-tree specific fertilizer." },
+    { plantType: "Corn", disease: "Healthy", confidence: 0.98, remedies: [], prevention: ["Maintain regular watering", "Monitor for pests"], isClear: true, isMock: true, pestName: "Corn Borer", pestRemedies: ["Apply Bacillus thuringiensis (Bt)", "Remove infested stalks"], pestConfidence: 0.92, soilFertilityLevel: "High", soilFertilityRecommendations: "Corn is a heavy feeder; maintain high nitrogen levels and consider side-dressing with urea if leaves yellow." },
+    { plantType: "Potato", disease: "Late Blight", confidence: 0.91, remedies: ["Apply chlorothalonil", "Destroy infected plants"], prevention: ["Use certified seed", "Hilling to protect tubers"], isClear: true, isMock: true, pestName: "Colorado Potato Beetle", pestRemedies: ["Handpick beetles", "Apply spinosad"], pestConfidence: 0.89, soilFertilityLevel: "Low", soilFertilityRecommendations: "Potatoes need loose, well-draining soil. Incorporate aged manure and ensure adequate potassium for tuber growth." }
   ];
   // Simple hash based on length to pick a deterministic mock result
   const hash = (imageBase64 || "").length % mockResults.length;
@@ -94,7 +94,7 @@ const getValidKey = () => {
   return { key: val, source };
 };
 
-export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg", language = "en") => {
+export const analyzeImage = async (imageBase64, location, temperature, mimeType = "image/jpeg", language = "en") => {
   if (process.env.MOCK_API === 'true') {
     console.log("[DEBUG] Using Mock Data (MOCK_API is explicitly true)");
     return getDynamicMock(imageBase64);
@@ -118,6 +118,9 @@ export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg
   let locationContext = "";
   if (location && location.lat && location.lng) {
     locationContext = `The crop is located at latitude ${location.lat}, longitude ${location.lng}. Please consider regional climate and common local diseases in your analysis if relevant.`;
+    if (temperature !== undefined && temperature !== null) {
+      locationContext += ` The current temperature is ${temperature}°C.`;
+    }
   }
 
   let langPrompt = "";
@@ -136,6 +139,7 @@ export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg
     1. The plant type.
     2. Any diseases present.
     3. Any insects, pests, or bugs visible on the plant/leaf.
+    4. Based on the location and temperature (if provided), provide a soil fertility level (Low/Medium/High) and short recommendations for improvement (fertilizers, compost, etc.) in 2-3 sentences.
     ${locationContext}
     ${langPrompt}
   `;
@@ -170,9 +174,11 @@ export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg
               pestName: { type: Type.STRING, description: "The name of any detected insect or pest. Empty if none detected." },
               pestRemedies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of remedies or treatments specifically for the detected pest. Empty if none." },
               pestConfidence: { type: Type.NUMBER, description: "Confidence score for pest detection between 0 and 1." },
+              soilFertilityLevel: { type: Type.STRING, description: "Soil fertility level based on location and temperature. MUST be one of: 'High', 'Medium', 'Low', or 'Unknown'." },
+              soilFertilityRecommendations: { type: Type.STRING, description: "Short recommendations for soil improvement (fertilizers, compost, etc.) in 2-3 sentences. Empty if not a plant." },
               isClear: { type: Type.BOOLEAN, description: "True ONLY if the image clearly shows a plant, crop, leaf, fruit, or vegetable. False otherwise." }
             },
-            required: ["plantType", "disease", "confidence", "remedies", "prevention", "isClear", "pestName", "pestRemedies"]
+            required: ["plantType", "disease", "confidence", "remedies", "prevention", "isClear", "pestName", "pestRemedies", "soilFertilityLevel", "soilFertilityRecommendations"]
           }
         }
       });
