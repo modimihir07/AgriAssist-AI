@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { 
-  Leaf, Smartphone, Server, Database, Github, CheckCircle2, 
+  Leaf, Sun, Moon, Smartphone, Server, Database, Github, CheckCircle2, 
   AlertCircle, Camera, ShieldCheck, Globe, Upload, 
   ScanLine, ArrowRight, Activity, Sprout, Target, Play,
   AlertTriangle, Check, Droplets, ExternalLink, Copy, ThumbsUp, ThumbsDown, Languages, ChevronDown,
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { useTheme } from './contexts/ThemeContext';
 import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
@@ -475,6 +476,7 @@ const languages = [
 ];
 
 export default function App() {
+  const { theme, toggleTheme } = useTheme();
   const [backendStatus, setBackendStatus] = useState<'loading' | 'online' | 'offline'>('loading');
   const [activeTab, setActiveTab] = useState<'overview' | 'demo'>('overview');
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -1742,7 +1744,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F0D] text-slate-200 font-sans selection:bg-emerald-500/30 relative flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0F0D] text-slate-800 dark:text-slate-200 font-sans selection:bg-emerald-500/30 relative flex flex-col overflow-x-hidden">
       {/* Offline Banner */}
       <AnimatePresence>
         {(!isOnline || isSlowNetwork) && (
@@ -1815,8 +1817,8 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
       </AnimatePresence>
 
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-[#0A0F0D]/80 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#0A0F0D]/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <motion.div 
             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3 cursor-pointer"
@@ -1830,24 +1832,24 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
             }}
           >
             <div className="bg-gradient-to-br from-emerald-400 to-green-600 p-2 rounded-xl shadow-lg shadow-emerald-500/20">
-              <Leaf className="w-6 h-6 text-white" />
+              <Leaf className="w-6 h-6 text-slate-900 dark:text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-white">AgriAssist<span className="text-emerald-400">.AI</span></span>
+            <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">AgriAssist<span className="text-emerald-600 dark:text-emerald-400">.AI</span></span>
           </motion.div>
           
           <motion.div 
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-            className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/10"
+            className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-white/5 p-1 rounded-full border border-slate-200 dark:border-white/10"
           >
             <button 
               onClick={() => setActiveTab('overview')}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105 w-36 flex items-center justify-center whitespace-nowrap ${activeTab === 'overview' ? 'bg-white/10 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105 w-36 flex items-center justify-center whitespace-nowrap ${activeTab === 'overview' ? 'bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white'}`}
             >
               {translations[language].nav_overview}
             </button>
             <button 
               onClick={() => setActiveTab('demo')}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-36 whitespace-nowrap ${activeTab === 'demo' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25' : 'text-slate-400 hover:text-white'}`}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 w-36 whitespace-nowrap ${activeTab === 'demo' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white'}`}
             >
               <Play className="w-4 h-4" /> {translations[language].nav_demo}
             </button>
@@ -1855,19 +1857,33 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
 
           <motion.div 
             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 sm:gap-3"
           >
-            <div className="relative" ref={langRef}>
+            <button
+              onClick={toggleTheme}
+              className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all duration-300 shadow-sm"
+              aria-label="Toggle Theme"
+            >
+              <motion.div
+                key={theme}
+                initial={{ scale: 0.5, opacity: 0, rotate: -90 }}
+                animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+              >
+                {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-600 dark:text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
+              </motion.div>
+            </button>
+            <div className="relative flex-shrink-0" ref={langRef}>
               <button 
                 onClick={() => setIsLangOpen(!isLangOpen)}
                 aria-label="Select Language"
                 aria-haspopup="true"
                 aria-expanded={isLangOpen}
-                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 backdrop-blur-md px-3 py-2 rounded-xl border border-white/10 transition-all duration-300 group whitespace-nowrap"
+                className="h-10 flex items-center gap-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 backdrop-blur-md px-3 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-300 group whitespace-nowrap shadow-sm"
               >
-                <Globe className="w-4 h-4 text-emerald-400 group-hover:rotate-12 transition-transform" />
-                <span className="text-white text-sm font-medium uppercase">{language}</span>
-                <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-300 ${isLangOpen ? 'rotate-180' : ''}`} />
+                <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:rotate-12 transition-transform" />
+                <span className="text-slate-900 dark:text-white text-sm font-medium uppercase">{language}</span>
+                <ChevronDown className={`w-3 h-3 text-slate-500 dark:text-slate-400 transition-transform duration-300 ${isLangOpen ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
@@ -1876,7 +1892,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-40 bg-[#0A0F0D]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100]"
+                    className="absolute right-0 mt-2 w-40 bg-white/90 dark:bg-[#0A0F0D]/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100]"
                   >
                     <div className="p-1.5">
                       {languages.map((lang) => (
@@ -1888,8 +1904,8 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                           }}
                           className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-all duration-200 ${
                             language === lang.code 
-                              ? 'bg-emerald-500/20 text-emerald-400 font-semibold' 
-                              : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                              ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold' 
+                              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:text-white'
                           }`}
                         >
                           <span>{lang.native}</span>
@@ -1902,9 +1918,9 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
               </AnimatePresence>
             </div>
 
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${
-              backendStatus === 'online' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-              backendStatus === 'offline' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+            <div className={`h-10 flex items-center gap-2 px-3 rounded-full text-xs font-medium border transition-colors ${
+              backendStatus === 'online' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 
+              backendStatus === 'offline' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20' : 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20'
             }`}>
               <Activity className="w-3 h-3" />
               <span className="hidden sm:inline">{backendStatus === 'online' ? translations[language].api_online : translations[language].api_offline}</span>
@@ -1914,7 +1930,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
             {!isAuthLoading && (
               <div className="flex items-center">
                 {user ? (
-                  <div className="flex items-center gap-3 bg-white/5 pl-2 pr-4 py-1.5 rounded-full border border-white/10">
+                  <div className="h-10 flex items-center gap-3 bg-slate-100 dark:bg-white/5 pl-2 pr-4 rounded-full border border-slate-200 dark:border-white/10 shadow-sm">
                     {user.photoURL ? (
                       <img src={user.photoURL} alt="Profile" className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
                     ) : (
@@ -1922,12 +1938,12 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                         {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
                       </div>
                     )}
-                    <span className="text-xs font-medium text-slate-200 hidden sm:inline max-w-[100px] truncate">
+                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200 hidden sm:inline max-w-[100px] truncate">
                       {user.displayName || user.email}
                     </span>
                     <button 
                       onClick={handleSignOut}
-                      className="text-slate-400 hover:text-red-400 transition-colors"
+                      className="text-slate-500 dark:text-slate-400 hover:text-red-600 dark:text-red-400 transition-colors"
                       title={translations[language].sign_out || "Sign Out"}
                     >
                       <LogOut className="w-4 h-4" />
@@ -1936,7 +1952,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                 ) : (
                   <button 
                     onClick={handleSignIn}
-                    className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-lg shadow-emerald-500/25 whitespace-nowrap"
+                    className="h-10 flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 rounded-full text-sm font-medium transition-colors shadow-lg shadow-emerald-500/25 whitespace-nowrap"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -1971,7 +1987,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.1 }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium mb-8"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-8"
                 >
                   <Target className="w-4 h-4" />
                   Google Solution Challenge 2026
@@ -1979,7 +1995,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                 
                   <motion.h1 
                     initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}
-                    className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-8 leading-tight"
+                    className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8 leading-tight"
                   >
                     {translations[language].hero_title} <br/>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
@@ -1989,7 +2005,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                   
                   <motion.p 
                     initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
-                    className="text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed"
+                    className="text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed"
                   >
                     {translations[language].hero_subtitle}
                   </motion.p>
@@ -2010,7 +2026,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                       href="https://github.com/modimihir07/AgriAssist-AI.git" 
                       target="_blank" 
                       rel="noreferrer"
-                      className="px-8 py-4 rounded-full bg-white/5 text-white font-bold text-lg hover:bg-white/10 transition-colors border border-white/10 flex items-center gap-2 cursor-pointer"
+                      className="px-8 py-4 rounded-full bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white font-bold text-lg hover:bg-slate-200 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10 flex items-center gap-2 cursor-pointer"
                     >
                       <Github className="w-5 h-5" /> {translations[language].btn_view_source}
                     </motion.a>
@@ -2019,12 +2035,12 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
 
               {/* UN SDGs Section */}
               <div className="py-16 relative z-40">
-                <h2 className="text-2xl font-bold text-white mb-8 text-center">{translations[language].sdg_title}</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">{translations[language].sdg_title}</h2>
                 <div className="grid md:grid-cols-3 gap-6">
                   {[
                     { num: "2", title: "Zero Hunger", desc: "Preventing crop loss through early disease detection to ensure food security.", color: "from-yellow-500/20 to-amber-600/20", border: "border-yellow-500/30", text: "text-yellow-400", link: "https://sdgs.un.org/goals/goal2" },
                     { num: "12", title: "Responsible Consumption", desc: "Optimizing pesticide use by providing targeted, AI-driven treatment plans.", color: "from-orange-500/20 to-red-600/20", border: "border-orange-500/30", text: "text-orange-400", link: "https://sdgs.un.org/goals/goal12" },
-                    { num: "13", title: "Climate Action", desc: "Building resilient agricultural practices against climate-induced plant diseases.", color: "from-emerald-500/20 to-green-600/20", border: "border-emerald-500/30", text: "text-emerald-400", link: "https://sdgs.un.org/goals/goal13" }
+                    { num: "13", title: "Climate Action", desc: "Building resilient agricultural practices against climate-induced plant diseases.", color: "from-emerald-500/20 to-green-600/20", border: "border-emerald-500/30", text: "text-emerald-600 dark:text-emerald-400", link: "https://sdgs.un.org/goals/goal13" }
                   ].map((sdg, i) => (
                     <motion.a 
                       href={sdg.link}
@@ -2040,8 +2056,8 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                     >
                       <ExternalLink className={`absolute top-6 right-6 w-5 h-5 ${sdg.text} opacity-0 group-hover:opacity-100 transition-opacity`} />
                       <div className={`text-5xl font-black ${sdg.text} opacity-50 mb-4 transition-transform group-hover:scale-110 origin-left`}>SDG {sdg.num}</div>
-                      <h3 className="text-xl font-bold text-white mb-3">{sdg.title}</h3>
-                      <p className="text-slate-300 leading-relaxed">{sdg.desc}</p>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{sdg.title}</h3>
+                      <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{sdg.desc}</p>
                     </motion.a>
                   ))}
                 </div>
@@ -2049,56 +2065,56 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
 
               {/* Tech Stack Bento Grid */}
               <div className="py-16 relative z-40">
-                <h2 className="text-2xl font-bold text-white mb-8 text-center">{translations[language].tech_title}</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8 text-center">{translations[language].tech_title}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[200px]">
                   <motion.a 
                     href="https://flutter.dev" target="_blank" rel="noreferrer"
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
                     whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    className="block md:col-span-2 md:row-span-2 bg-[#1A1F1C] rounded-3xl p-8 border border-white/5 relative overflow-hidden group cursor-pointer"
+                    className="block md:col-span-2 md:row-span-2 bg-white dark:bg-[#1A1F1C] rounded-3xl p-8 border border-slate-200 dark:border-white/5 relative overflow-hidden group cursor-pointer"
                   >
-                    <ExternalLink className="absolute top-6 right-6 w-5 h-5 text-white/20 group-hover:text-blue-400 transition-colors" />
+                    <ExternalLink className="absolute top-6 right-6 w-5 h-5 text-slate-900 dark:text-white/20 group-hover:text-blue-400 transition-colors" />
                     <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all" />
                     <Smartphone className="w-12 h-12 text-blue-400 mb-6 group-hover:scale-110 transition-transform origin-left" />
-                    <h3 className="text-2xl font-bold text-white mb-3">Flutter Frontend</h3>
-                    <p className="text-slate-400">Cross-platform mobile application built with Material 3 design. Features offline caching via Hive, local localization (English/Hindi), and seamless camera integration.</p>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Flutter Frontend</h3>
+                    <p className="text-slate-500 dark:text-slate-400">Cross-platform mobile application built with Material 3 design. Features offline caching via Hive, local localization (English/Hindi), and seamless camera integration.</p>
                   </motion.a>
                   
                   <motion.a 
                     href="https://nodejs.org" target="_blank" rel="noreferrer"
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 }}
                     whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    className="block md:col-span-2 bg-[#1A1F1C] rounded-3xl p-8 border border-white/5 relative overflow-hidden group cursor-pointer"
+                    className="block md:col-span-2 bg-white dark:bg-[#1A1F1C] rounded-3xl p-8 border border-slate-200 dark:border-white/5 relative overflow-hidden group cursor-pointer"
                   >
-                    <ExternalLink className="absolute top-6 right-6 w-5 h-5 text-white/20 group-hover:text-emerald-400 transition-colors" />
+                    <ExternalLink className="absolute top-6 right-6 w-5 h-5 text-slate-900 dark:text-white/20 group-hover:text-emerald-600 dark:text-emerald-400 transition-colors" />
                     <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all" />
-                    <Server className="w-10 h-10 text-emerald-400 mb-4 group-hover:scale-110 transition-transform origin-left" />
-                    <h3 className="text-xl font-bold text-white mb-2">Node.js + Express API</h3>
-                    <p className="text-slate-400 text-sm">Robust backend architecture handling rate limiting, request validation, and secure AI model orchestration.</p>
+                    <Server className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mb-4 group-hover:scale-110 transition-transform origin-left" />
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Node.js + Express API</h3>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">Robust backend architecture handling rate limiting, request validation, and secure AI model orchestration.</p>
                   </motion.a>
 
                   <motion.a 
                     href="https://firebase.google.com" target="_blank" rel="noreferrer"
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }}
                     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                    className="block bg-[#1A1F1C] rounded-3xl p-6 border border-white/5 flex flex-col justify-center items-center text-center hover:bg-white/5 transition-colors group cursor-pointer relative"
+                    className="block bg-white dark:bg-[#1A1F1C] rounded-3xl p-6 border border-slate-200 dark:border-white/5 flex flex-col justify-center items-center text-center hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer relative"
                   >
-                    <ExternalLink className="absolute top-4 right-4 w-4 h-4 text-white/20 group-hover:text-amber-400 transition-colors" />
-                    <Database className="w-10 h-10 text-amber-400 mb-4 group-hover:scale-110 transition-transform" />
-                    <h3 className="font-bold text-white">Firebase</h3>
-                    <p className="text-xs text-slate-400 mt-2">Auth & Firestore</p>
+                    <ExternalLink className="absolute top-4 right-4 w-4 h-4 text-slate-900 dark:text-white/20 group-hover:text-amber-600 dark:text-amber-400 transition-colors" />
+                    <Database className="w-10 h-10 text-amber-600 dark:text-amber-400 mb-4 group-hover:scale-110 transition-transform" />
+                    <h3 className="font-bold text-slate-900 dark:text-white">Firebase</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Auth & Firestore</p>
                   </motion.a>
 
                   <motion.a 
                     href="https://ai.google.dev" target="_blank" rel="noreferrer"
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6 }}
                     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                    className="block bg-[#1A1F1C] rounded-3xl p-6 border border-white/5 flex flex-col justify-center items-center text-center hover:bg-white/5 transition-colors group cursor-pointer relative"
+                    className="block bg-white dark:bg-[#1A1F1C] rounded-3xl p-6 border border-slate-200 dark:border-white/5 flex flex-col justify-center items-center text-center hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group cursor-pointer relative"
                   >
-                    <ExternalLink className="absolute top-4 right-4 w-4 h-4 text-white/20 group-hover:text-purple-400 transition-colors" />
+                    <ExternalLink className="absolute top-4 right-4 w-4 h-4 text-slate-900 dark:text-white/20 group-hover:text-purple-400 transition-colors" />
                     <ScanLine className="w-10 h-10 text-purple-400 mb-4 group-hover:scale-110 transition-transform" />
-                    <h3 className="font-bold text-white">Gemini Pro</h3>
-                    <p className="text-xs text-slate-400 mt-2">Multimodal Vision AI</p>
+                    <h3 className="font-bold text-slate-900 dark:text-white">Gemini Pro</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Multimodal Vision AI</p>
                   </motion.a>
                 </div>
               </div>
@@ -2113,19 +2129,19 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
               className="py-10 relative z-40"
             >
               <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-white mb-4">{translations[language].demo_title}</h2>
-                <p className="text-slate-400">{translations[language].demo_subtitle}</p>
+                <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">{translations[language].demo_title}</h2>
+                <p className="text-slate-500 dark:text-slate-400">{translations[language].demo_subtitle}</p>
               </div>
 
                 <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
                 {/* Upload Section */}
-                <div className="bg-[#1A1F1C] border border-white/10 rounded-3xl p-8 shadow-2xl">
+                <div className="bg-white dark:bg-[#1A1F1C] border border-slate-200 dark:border-white/10 rounded-3xl p-8 shadow-2xl">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2 shrink-0">
-                      <Camera className="w-5 h-5 text-emerald-400" /> {translations[language].input_title}
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 shrink-0">
+                      <Camera className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> {translations[language].input_title}
                     </h3>
                     {userLocation && (
-                      <div className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 w-fit">
+                      <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 w-fit">
                         <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                         <span className="truncate max-w-[150px] sm:max-w-none">
                           {userLocation.name ? `Location: ${userLocation.name}` : 'Location Active'}
@@ -2148,16 +2164,16 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                     <motion.div 
                       whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-white/20 rounded-2xl h-80 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group"
+                      className="border-2 border-dashed border-slate-300 dark:border-white/20 rounded-2xl h-80 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group"
                     >
-                      <div className="bg-white/5 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                        <Upload className="w-8 h-8 text-slate-400 group-hover:text-emerald-400" />
+                      <div className="bg-slate-100 dark:bg-white/5 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                        <Upload className="w-8 h-8 text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:text-emerald-400" />
                       </div>
-                      <p className="text-white font-medium mb-1">Click to upload leaf image</p>
-                      <p className="text-sm text-slate-500">Supports JPG, PNG (Max 10MB)</p>
+                      <p className="text-slate-900 dark:text-white font-medium mb-1">Click to upload leaf image</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Supports JPG, PNG (Max 10MB)</p>
                     </motion.div>
                   ) : (
-                    <div className="relative rounded-2xl overflow-hidden h-80 bg-black/50 border border-white/10">
+                    <div className="relative rounded-2xl overflow-hidden h-80 bg-slate-200/50 dark:bg-black/50 border border-slate-200 dark:border-white/10">
                       <img src={previewUrl} alt="Preview" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                       
                       {isAnalyzing && (
@@ -2190,7 +2206,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                           setResult(null); 
                           setChatMessages([]);
                         }}
-                        className="absolute top-4 right-4 bg-black/50 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs hover:bg-black/80 transition-colors cursor-pointer"
+                        className="absolute top-4 right-4 bg-slate-200/50 dark:bg-black/50 backdrop-blur-md text-slate-900 dark:text-white px-3 py-1 rounded-full text-xs hover:bg-slate-300/80 dark:hover:bg-black/80 transition-colors cursor-pointer"
                         disabled={isAnalyzing}
                       >
                         Change Image
@@ -2204,7 +2220,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                     onClick={handleAnalyze}
                     disabled={!selectedImage || isAnalyzing}
                     className={`w-full mt-6 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${
-                      !selectedImage ? 'bg-white/5 text-slate-500 cursor-not-allowed' : 
+                      !selectedImage ? 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 
                       isAnalyzing ? 'bg-emerald-500/50 text-white cursor-wait' : 
                       'bg-emerald-500 text-white hover:bg-emerald-400 shadow-lg shadow-emerald-500/25 cursor-pointer'
                     }`}
@@ -2218,15 +2234,15 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                 </div>
 
                 {/* Results Section */}
-                <div id="analysis-report" className="bg-[#1A1F1C] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                <div id="analysis-report" className="bg-white dark:bg-[#1A1F1C] border border-slate-200 dark:border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6" data-html2canvas-ignore>
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2 shrink-0">
-                      <Activity className="w-5 h-5 text-emerald-400" /> {translations[language].results_title || "Analysis Results"}
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 shrink-0">
+                      <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> {translations[language].results_title || "Analysis Results"}
                     </h3>
                     {result && result.isClear && (
                       <button
                         onClick={handleShare}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-slate-300 hover:text-white transition-colors w-fit"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:text-white transition-colors w-fit"
                         title={translations[language].share_results || "Share Results"}
                       >
                         <Share2 className="w-4 h-4" />
@@ -2237,30 +2253,30 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                   
                   {/* Title for the report (only visible in canvas) */}
                   <div className="hidden" data-html2canvas-show>
-                    <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+                    <div className="flex items-center gap-3 mb-6 border-b border-slate-200 dark:border-white/10 pb-4">
                       <div className="bg-gradient-to-br from-emerald-400 to-green-600 p-2 rounded-xl">
-                        <Leaf className="w-6 h-6 text-white" />
+                        <Leaf className="w-6 h-6 text-slate-900 dark:text-white" />
                       </div>
                       <div>
-                        <h2 className="text-xl font-bold text-white">AgriAssist<span className="text-emerald-400">.AI</span> Report</h2>
-                        <p className="text-xs text-slate-400">{new Date().toLocaleString()}</p>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">AgriAssist<span className="text-emerald-600 dark:text-emerald-400">.AI</span> Report</h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{new Date().toLocaleString()}</p>
                       </div>
                     </div>
                     {previewUrl && (
-                      <div className="mb-6 rounded-2xl overflow-hidden h-64 bg-black/50 border border-white/10 flex items-center justify-center">
+                      <div className="mb-6 rounded-2xl overflow-hidden h-64 bg-slate-200/50 dark:bg-black/50 border border-slate-200 dark:border-white/10 flex items-center justify-center">
                         <img src={previewUrl} alt="Analyzed Crop" className="max-w-full max-h-full object-contain" referrerPolicy="no-referrer" />
                       </div>
                     )}
                     {(result as any)?.soilFertilityLevel && (
                       <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                        <h4 className="text-amber-400 font-bold mb-2">Soil Fertility: {(result as any).soilFertilityLevel}</h4>
-                        <p className="text-slate-300 text-sm">{(result as any).soilFertilityRecommendations}</p>
+                        <h4 className="text-amber-600 dark:text-amber-400 font-bold mb-2">Soil Fertility: {(result as any).soilFertilityLevel}</h4>
+                        <p className="text-slate-600 dark:text-slate-300 text-sm">{(result as any).soilFertilityRecommendations}</p>
                       </div>
                     )}
                   </div>
 
                   {!result && !error && !isAnalyzing && (
-                    <div className="h-80 flex flex-col items-center justify-center text-slate-500 text-center">
+                    <div className="h-80 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 text-center">
                       <ScanLine className="w-12 h-12 mb-4 opacity-20" />
                       <p>Upload an image and click analyze to see<br/>AI-generated insights here.</p>
                     </div>
@@ -2269,12 +2285,12 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                   {isAnalyzing && (
                     <div className="h-80 flex flex-col items-center justify-center">
                       <div className="w-16 h-16 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-6" />
-                      <p className="text-emerald-400 font-medium animate-pulse">Consulting Agricultural AI Model...</p>
+                      <p className="text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">Consulting Agricultural AI Model...</p>
                     </div>
                   )}
 
                   {error && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 flex items-start gap-3 mb-4">
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 dark:text-red-400 flex items-start gap-3 mb-4">
                       <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
                       <p>{error}</p>
                     </motion.div>
@@ -2307,28 +2323,28 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                         </motion.div>
                       ) : (
                         <>
-                          <div className="flex items-start justify-between pb-6 border-b border-white/10">
+                          <div className="flex items-start justify-between pb-6 border-b border-slate-200 dark:border-white/10">
                             <div>
-                              <p className="text-sm text-slate-400 mb-1">Identified Crop</p>
-                              <h4 className="text-2xl font-bold text-white">{result.plantType}</h4>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Identified Crop</p>
+                              <h4 className="text-2xl font-bold text-slate-900 dark:text-white">{result.plantType}</h4>
                               {(result.isMock || result.isFromCache || result.isOfflineMock) && (
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   {result.isMock && (
                                     <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border ${
                                       result.quotaExceeded 
-                                        ? 'bg-red-500/20 text-red-400 border-red-500/30' 
+                                        ? 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30' 
                                         : 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30'
                                     }`}>
                                       {result.quotaExceeded ? 'AI Quota Exceeded (Showing Simulation)' : 'Mock Data (API Key Missing/Invalid)'}
                                     </span>
                                   )}
                                   {result.isFromCache && (
-                                    <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                                    <span className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded flex items-center gap-1">
                                       <Database className="w-3 h-3" /> {translations[language].cached_result}
                                     </span>
                                   )}
                                   {result.isOfflineMock && (
-                                    <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                                    <span className="bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded flex items-center gap-1">
                                       <CloudOff className="w-3 h-3" /> {translations[language].offline_mock}
                                     </span>
                                   )}
@@ -2336,9 +2352,9 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                               )}
                             </div>
                             <div className="text-right">
-                              <p className="text-sm text-slate-400 mb-1">Status</p>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Status</p>
                               <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold ${
-                                result.disease === 'Healthy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                                result.disease === 'Healthy' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'bg-red-500/20 text-red-700 dark:text-red-400'
                               }`}>
                                 {result.disease === 'Healthy' ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
                                 {result.disease}
@@ -2347,18 +2363,18 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                           </div>
 
                           {userLocation && (
-                            <div className="flex items-center gap-2 text-xs text-slate-400 bg-white/5 p-3 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 p-3 rounded-xl border border-slate-200 dark:border-white/5">
                               <Globe className="w-4 h-4 text-emerald-500" />
-                              <span>Location: <span className="text-slate-200 font-medium">{userLocation.name || `Lat: ${userLocation.lat.toFixed(4)}, Lng: ${userLocation.lng.toFixed(4)}`}</span>{currentTemperature !== null ? ` • 🌡️ ${currentTemperature}°C` : !isWeatherAvailable ? ' • 🌡️ –' : ''}</span>
+                              <span>Location: <span className="text-slate-800 dark:text-slate-200 font-medium">{userLocation.name || `Lat: ${userLocation.lat.toFixed(4)}, Lng: ${userLocation.lng.toFixed(4)}`}</span>{currentTemperature !== null ? ` • 🌡️ ${currentTemperature}°C` : !isWeatherAvailable ? ' • 🌡️ –' : ''}</span>
                             </div>
                           )}
 
                           <div>
                             <div className="flex justify-between text-sm mb-2">
-                              <span className="text-slate-400">AI Confidence Score</span>
-                              <span className="text-emerald-400 font-bold">{(result.confidence * 100).toFixed(1)}%</span>
+                              <span className="text-slate-500 dark:text-slate-400">AI Confidence Score</span>
+                              <span className="text-emerald-600 dark:text-emerald-400 font-bold">{(result.confidence * 100).toFixed(1)}%</span>
                             </div>
-                            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                               <motion.div 
                                 initial={{ width: 0 }}
                                 animate={{ width: `${result.confidence * 100}%` }}
@@ -2375,30 +2391,30 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                                   href={`https://www.google.com/search?q=${encodeURIComponent(`${result.plantType} ${result.disease} treatment`)}`} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
-                                  className="text-xs flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors"
+                                  className="text-xs flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
                                 >
                                   <ExternalLink className="w-3 h-3" /> Read more about {result.disease}
                                 </a>
                               </div>
                               <div>
-                                <h5 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                                <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
                                   <Droplets className="w-4 h-4 text-blue-400" /> Recommended Remedies
                                 </h5>
                                 <ul className="space-y-2">
                                   {result.remedies?.map((remedy: string, i: number) => (
-                                    <li key={i} className="text-sm text-slate-300 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
+                                    <li key={i} className="text-sm text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/5">
                                       {remedy}
                                     </li>
                                   ))}
                                 </ul>
                               </div>
                               <div>
-                                <h5 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                                  <ShieldCheck className="w-4 h-4 text-emerald-400" /> Prevention Strategies
+                                <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                                  <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Prevention Strategies
                                 </h5>
                                 <ul className="space-y-2">
                                   {result.prevention?.map((prev: string, i: number) => (
-                                    <li key={i} className="text-sm text-slate-300 bg-white/5 px-4 py-2 rounded-lg border border-white/5">
+                                    <li key={i} className="text-sm text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/5">
                                       {prev}
                                     </li>
                                   ))}
@@ -2408,32 +2424,32 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                           )}
 
                           {/* Pest Detection Section */}
-                          <div className="pt-4 border-t border-white/5">
+                          <div className="pt-4 border-t border-slate-200 dark:border-white/5">
                             {result.pestName ? (
                               <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                   <div>
-                                    <p className="text-sm text-slate-400 mb-1">{translations[language].detected_pest}</p>
-                                    <h5 className="text-lg font-bold text-white flex items-center gap-2">
-                                      <Bug className="w-5 h-5 text-amber-400" /> {result.pestName}
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">{translations[language].detected_pest}</p>
+                                    <h5 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                      <Bug className="w-5 h-5 text-amber-600 dark:text-amber-400" /> {result.pestName}
                                     </h5>
                                   </div>
                                   {result.pestConfidence > 0 && (
                                     <div className="text-right">
-                                      <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Pest Confidence</p>
-                                      <span className="text-amber-400 font-bold text-sm">{(result.pestConfidence * 100).toFixed(0)}%</span>
+                                      <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Pest Confidence</p>
+                                      <span className="text-amber-600 dark:text-amber-400 font-bold text-sm">{(result.pestConfidence * 100).toFixed(0)}%</span>
                                     </div>
                                   )}
                                 </div>
                                 
                                 {result.pestRemedies && result.pestRemedies.length > 0 && (
                                   <div>
-                                    <h5 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                                      <ShieldCheck className="w-4 h-4 text-amber-400" /> {translations[language].pest_remedies}
+                                    <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                                      <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" /> {translations[language].pest_remedies}
                                     </h5>
                                     <ul className="space-y-2">
                                       {result.pestRemedies.map((remedy: string, i: number) => (
-                                        <li key={i} className="text-sm text-slate-300 bg-amber-500/5 px-4 py-2 rounded-lg border border-amber-500/10">
+                                        <li key={i} className="text-sm text-slate-600 dark:text-slate-300 bg-amber-500/5 px-4 py-2 rounded-lg border border-amber-500/10">
                                           {remedy}
                                         </li>
                                       ))}
@@ -2442,7 +2458,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                                 )}
                               </div>
                             ) : (
-                              <div className="flex items-center gap-2 text-xs text-slate-500 italic">
+                              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 italic">
                                 <CheckCircle2 className="w-4 h-4 text-emerald-500/50" />
                                 {translations[language].no_pests_detected}
                               </div>
@@ -2451,25 +2467,25 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
 
                           {/* Soil Fertility Section */}
                           {result.soilFertilityLevel && (
-                            <div className="pt-4 border-t border-white/5 mt-4">
+                            <div className="pt-4 border-t border-slate-200 dark:border-white/5 mt-4">
                               <div className="space-y-4">
                                 <div>
-                                  <h5 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                                    <Sprout className="w-4 h-4 text-emerald-400" /> Soil Fertility & Recommendations
+                                  <h5 className="text-sm font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                                    <Sprout className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Soil Fertility & Recommendations
                                   </h5>
                                   <div className={`text-sm p-4 rounded-xl border leading-relaxed ${
-                                    result.soilFertilityLevel?.toLowerCase() === 'high' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-100' :
-                                    result.soilFertilityLevel?.toLowerCase() === 'medium' ? 'bg-amber-500/10 border-amber-500/20 text-amber-100' :
-                                    result.soilFertilityLevel?.toLowerCase() === 'low' ? 'bg-red-500/10 border-red-500/20 text-red-100' :
-                                    'bg-slate-500/10 border-slate-500/20 text-slate-300'
+                                    result.soilFertilityLevel?.toLowerCase() === 'high' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-800 dark:text-emerald-100' :
+                                    result.soilFertilityLevel?.toLowerCase() === 'medium' ? 'bg-amber-500/10 border-amber-500/20 text-amber-800 dark:text-amber-100' :
+                                    result.soilFertilityLevel?.toLowerCase() === 'low' ? 'bg-red-500/10 border-red-500/20 text-red-800 dark:text-red-100' :
+                                    'bg-slate-500/10 border-slate-500/20 text-slate-600 dark:text-slate-300'
                                   }`}>
                                     <div className="flex items-center gap-2 mb-2">
                                       <span className="font-bold uppercase tracking-wider text-xs opacity-80">Level:</span>
                                       <span className={`font-bold ${
-                                        result.soilFertilityLevel?.toLowerCase() === 'high' ? 'text-emerald-400' :
-                                        result.soilFertilityLevel?.toLowerCase() === 'medium' ? 'text-amber-400' :
-                                        result.soilFertilityLevel?.toLowerCase() === 'low' ? 'text-red-400' :
-                                        'text-slate-400'
+                                        result.soilFertilityLevel?.toLowerCase() === 'high' ? 'text-emerald-600 dark:text-emerald-400' :
+                                        result.soilFertilityLevel?.toLowerCase() === 'medium' ? 'text-amber-600 dark:text-amber-400' :
+                                        result.soilFertilityLevel?.toLowerCase() === 'low' ? 'text-red-600 dark:text-red-400' :
+                                        'text-slate-500 dark:text-slate-400'
                                       }`}>{result.soilFertilityLevel}</span>
                                     </div>
                                     <p className="opacity-90">{result.soilFertilityRecommendations}</p>
@@ -2490,16 +2506,16 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 max-w-5xl mx-auto bg-[#1A1F1C] border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col h-[500px]"
+                  className="mt-8 max-w-5xl mx-auto bg-white dark:bg-[#1A1F1C] border border-slate-200 dark:border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col h-[500px]"
                 >
-                  <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                      <Sprout className="w-5 h-5 text-emerald-400" /> AgriBot Assistant
+                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4 mb-4">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Sprout className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> AgriBot Assistant
                       {apiStatus && (
                         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
                           apiStatus.liveMode 
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' 
+                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
                         }`}>
                           {apiStatus.liveMode ? 'LIVE' : 'DEMO MODE'}
                         </span>
@@ -2512,11 +2528,11 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                           aria-label="Select Language"
                           aria-haspopup="true"
                           aria-expanded={isChatLangOpen}
-                          className="flex items-center gap-2 bg-white/5 hover:bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 transition-all duration-300 group"
+                          className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-300 group"
                         >
-                          <Languages className="w-3.5 h-3.5 text-emerald-400 group-hover:rotate-12 transition-transform" />
-                          <span className="text-white text-xs font-medium uppercase">{language}</span>
-                          <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-300 ${isChatLangOpen ? 'rotate-180' : ''}`} />
+                          <Languages className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:rotate-12 transition-transform" />
+                          <span className="text-slate-900 dark:text-white text-xs font-medium uppercase">{language}</span>
+                          <ChevronDown className={`w-3 h-3 text-slate-500 dark:text-slate-400 transition-transform duration-300 ${isChatLangOpen ? 'rotate-180' : ''}`} />
                         </button>
 
                         <AnimatePresence>
@@ -2525,7 +2541,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                               initial={{ opacity: 0, y: 10, scale: 0.95 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                              className="absolute right-0 mt-2 w-40 bg-[#0A0F0D]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100]"
+                              className="absolute right-0 mt-2 w-40 bg-white/90 dark:bg-[#0A0F0D]/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100]"
                             >
                               <div className="p-1.5">
                                 {languages.map((lang) => (
@@ -2537,8 +2553,8 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                                     }}
                                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-200 ${
                                       language === lang.code 
-                                        ? 'bg-emerald-500/20 text-emerald-400 font-semibold' 
-                                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                                        ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-semibold' 
+                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:text-white'
                                     }`}
                                   >
                                     <span>{lang.native}</span>
@@ -2553,7 +2569,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                       {pastConversations.length > 0 && (
                         <button
                           onClick={() => setShowHistory(!showHistory)}
-                          className="text-xs flex items-center gap-1 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-full transition-colors"
+                          className="text-xs flex items-center gap-1 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-full transition-colors"
                         >
                           {showHistory ? 'Back to Chat' : 'View History'}
                         </button>
@@ -2564,10 +2580,10 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                   {showHistory ? (
                     <div className="flex-grow overflow-y-auto pr-2 space-y-4 mb-4 custom-scrollbar">
                       {pastConversations.map((conv) => (
-                        <div key={conv.id} className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                        <div key={conv.id} className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
                           <div className="flex justify-between items-center mb-3">
-                            <span className="text-sm font-bold text-emerald-400">{conv.plantType} - {conv.disease}</span>
-                            <span className="text-xs text-slate-500">{new Date(conv.date).toLocaleDateString()}</span>
+                            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{conv.plantType} - {conv.disease}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">{new Date(conv.date).toLocaleDateString()}</span>
                           </div>
                           <div className="space-y-3">
                             {conv.messages.slice(1).map((msg: any, i: number) => (
@@ -2575,7 +2591,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                                 <div className={`max-w-[85%] p-3 rounded-xl text-sm ${
                                   msg.role === 'user' 
                                     ? 'bg-emerald-500/20 text-emerald-100 border border-emerald-500/30' 
-                                    : 'bg-black/40 text-slate-300 border border-white/5'
+                                    : 'bg-slate-200/40 dark:bg-black/40 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/5'
                                 }`}>
                                   <span className="font-bold text-xs opacity-50 mb-1 block">
                                     {msg.role === 'user' ? 'You' : 'AgriBot'}
@@ -2596,14 +2612,14 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                             <div className={`max-w-[80%] p-4 rounded-2xl relative group ${
                               msg.role === 'user' 
                                 ? 'bg-emerald-500 text-white rounded-br-sm' 
-                                : 'bg-white/5 text-slate-200 border border-white/10 rounded-bl-sm'
+                                : 'bg-slate-100 dark:bg-white/5 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10 rounded-bl-sm'
                             }`}>
                               <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                               
                               <div className={`absolute top-2 ${msg.role === 'user' ? '-left-12' : '-right-12'} opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1`}>
                                 <button 
                                   onClick={() => handleCopyMessage(msg.content)}
-                                  className="p-1.5 bg-black/50 rounded-lg hover:bg-black/70 text-slate-400 hover:text-white transition-colors relative"
+                                  className="p-1.5 bg-slate-200/50 dark:bg-black/50 rounded-lg hover:bg-slate-300/70 dark:hover:bg-black/70 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white transition-colors relative"
                                   title="Copy message"
                                 >
                                   <Copy className="w-3.5 h-3.5" />
@@ -2617,7 +2633,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                                   <button 
                                     onClick={() => toggleSpeaking(msg.content, i)}
                                     className={`p-1.5 rounded-lg transition-colors relative ${
-                                      isSpeaking === i ? 'bg-emerald-500 text-white' : 'bg-black/50 text-slate-400 hover:text-white hover:bg-black/70'
+                                      isSpeaking === i ? 'bg-emerald-500 text-white' : 'bg-slate-200/50 dark:bg-black/50 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white hover:bg-slate-300/70 dark:hover:bg-black/70'
                                     }`}
                                     title={isSpeaking === i ? "Stop speaking" : "Read aloud"}
                                   >
@@ -2631,13 +2647,13 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                               <div className="flex items-center gap-2 mt-1 ml-1">
                                 <button 
                                   onClick={() => handleReaction(i, '👍')}
-                                  className={`text-xs p-1 rounded-md transition-colors flex items-center gap-1 ${msg.reactions?.includes('👍') ? 'bg-emerald-500/20 text-emerald-400' : 'hover:bg-white/5 text-slate-500'}`}
+                                  className={`text-xs p-1 rounded-md transition-colors flex items-center gap-1 ${msg.reactions?.includes('👍') ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400'}`}
                                 >
                                   <ThumbsUp className="w-3 h-3" />
                                 </button>
                                 <button 
                                   onClick={() => handleReaction(i, '👎')}
-                                  className={`text-xs p-1 rounded-md transition-colors flex items-center gap-1 ${msg.reactions?.includes('👎') ? 'bg-red-500/20 text-red-400' : 'hover:bg-white/5 text-slate-500'}`}
+                                  className={`text-xs p-1 rounded-md transition-colors flex items-center gap-1 ${msg.reactions?.includes('👎') ? 'bg-red-500/20 text-red-700 dark:text-red-400' : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400'}`}
                                 >
                                   <ThumbsDown className="w-3 h-3" />
                                 </button>
@@ -2647,7 +2663,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                         ))}
                         {isChatting && (
                           <div className="flex justify-start">
-                            <div className="bg-white/5 border border-white/10 p-4 rounded-2xl rounded-bl-sm flex items-center gap-2">
+                            <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-2xl rounded-bl-sm flex items-center gap-2">
                               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" />
                               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
@@ -2662,7 +2678,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                           <button
                             key={idx}
                             onClick={() => setChatInput(prompt)}
-                            className="text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 px-3 py-1.5 rounded-full transition-colors"
+                            className="text-xs bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-full transition-colors"
                           >
                             {prompt}
                           </button>
@@ -2673,11 +2689,11 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                         <motion.div 
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs flex items-center gap-2"
+                          className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 dark:text-red-400 text-xs flex items-center gap-2"
                         >
                           <AlertTriangle className="w-4 h-4 shrink-0" />
                           <span>{micError}</span>
-                          <button onClick={() => setMicError(null)} className="ml-auto hover:text-white">✕</button>
+                          <button onClick={() => setMicError(null)} className="ml-auto hover:text-slate-900 dark:text-white">✕</button>
                         </motion.div>
                       )}
 
@@ -2725,7 +2741,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                             placeholder={isListening ? "Listening..." : "Ask AgriBot about this diagnosis... (Press Enter to send)"}
                             disabled={isChatting}
                             rows={1}
-                            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 pr-12 text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors disabled:opacity-50 resize-none overflow-hidden min-h-[48px]"
+                            className="w-full bg-slate-200/50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 pr-12 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:border-emerald-500/50 transition-colors disabled:opacity-50 resize-none overflow-hidden min-h-[48px]"
                             style={{ height: 'auto' }}
                           />
                           <button
@@ -2739,7 +2755,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
                             className={`absolute right-3 bottom-3 p-1.5 rounded-lg transition-all ${
                               isListening 
                                 ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/20' 
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                             }`}
                             title={!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) ? "Speech recognition not supported in this browser" : isListening ? "Stop listening" : "Voice input"}
                           >
@@ -2764,15 +2780,15 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
       </main>
 
       {/* Footer & License */}
-      <footer className="border-t border-white/10 bg-[#0A0F0D]/80 backdrop-blur-md py-8 mt-auto relative z-40">
+      <footer className="border-t border-slate-200 dark:border-white/10 bg-white/80 dark:bg-[#0A0F0D]/80 backdrop-blur-md py-8 mt-auto relative z-40">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-slate-400 text-sm">
+          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
             <Leaf className="w-4 h-4 text-emerald-500" />
             <span>© 2026 AgriAssist AI. All rights reserved.</span>
           </div>
-          <div className="text-slate-500 text-sm flex items-center gap-6">
-            <span>Released under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">MIT License</a>.</span>
-            <a href="#" className="hover:text-emerald-400 transition-colors">Privacy Policy</a>
+          <div className="text-slate-500 dark:text-slate-400 text-sm flex items-center gap-6">
+            <span>Released under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noreferrer" className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors">MIT License</a>.</span>
+            <a href="#" className="hover:text-emerald-600 dark:text-emerald-400 transition-colors">Privacy Policy</a>
           </div>
         </div>
       </footer>
