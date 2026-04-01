@@ -208,12 +208,12 @@ export const analyzeImage = async (imageBase64, location, mimeType = "image/jpeg
     // Check various ways the error might be structured
     try {
       errStr = typeof apiError === 'object' ? JSON.stringify(apiError) : String(apiError);
-      if (errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("429") || errStr.includes("quota exceeded")) {
+      if (errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("429") || errStr.includes("quota exceeded") || errStr.includes("503") || errStr.includes("UNAVAILABLE")) {
         isQuotaError = true;
       }
     } catch (e) {
       errStr = errorMsg;
-      if (errorMsg.toLowerCase().includes("quota") || errorMsg.includes("429")) {
+      if (errorMsg.toLowerCase().includes("quota") || errorMsg.includes("429") || errorMsg.includes("503") || errorMsg.includes("UNAVAILABLE")) {
         isQuotaError = true;
       }
     }
@@ -345,12 +345,12 @@ export const chatWithAgriBot = async (context, message, location, imageBase64, m
 
     try {
       errStr = typeof error === 'object' ? JSON.stringify(error) : String(error);
-      if (errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("429") || errStr.includes("quota exceeded")) {
+      if (errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("429") || errStr.includes("quota exceeded") || errStr.includes("503") || errStr.includes("UNAVAILABLE")) {
         isQuotaError = true;
       }
     } catch (e) {
       errStr = errorMsg;
-      if (errorMsg.toLowerCase().includes("quota") || errorMsg.includes("429")) {
+      if (errorMsg.toLowerCase().includes("quota") || errorMsg.includes("429") || errorMsg.includes("503") || errorMsg.includes("UNAVAILABLE")) {
         isQuotaError = true;
       }
     }
@@ -413,7 +413,7 @@ export const testGeminiKey = async () => {
         try {
           const ai = new GoogleGenAI({ apiKey: sanitized });
           const response = await ai.models.generateContent({
-            model: "gemini-3-flash-preview",
+            model: "gemini-3.1-flash-lite-preview",
             contents: "Hello, this is a test message to verify the API key."
           });
           
@@ -424,9 +424,22 @@ export const testGeminiKey = async () => {
           }
         } catch (error) {
           console.error(`[DEBUG] Test Key Error for ${keyName}:`, error.message);
-          keyStatus[keyName].isValid = false;
-          keyStatus[keyName].error = error.message;
-          lastError = error;
+          
+          // If the error is 503 (UNAVAILABLE) or 429 (RESOURCE_EXHAUSTED), the key is actually valid!
+          // The API just rejected the request due to load or quota.
+          const errorStr = error.message || "";
+          if (errorStr.includes("503") || errorStr.includes("UNAVAILABLE") || 
+              errorStr.includes("429") || errorStr.includes("RESOURCE_EXHAUSTED") || errorStr.includes("quota")) {
+            console.log(`[DEBUG] Key is valid, but service is busy/quota exceeded. Accepting key.`);
+            workingKeyInfo = { key: sanitized, source: keyName };
+            cachedWorkingKey = workingKeyInfo;
+            keyStatus[keyName].isValid = true;
+            keyStatus[keyName].warning = "Service busy or quota exceeded, but key is valid.";
+          } else {
+            keyStatus[keyName].isValid = false;
+            keyStatus[keyName].error = error.message;
+            lastError = error;
+          }
         }
       }
     } else {

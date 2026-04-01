@@ -1634,7 +1634,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F0D] text-slate-200 font-sans selection:bg-emerald-500/30 relative flex flex-col">
+    <div className="min-h-screen bg-[#0A0F0D] text-slate-200 font-sans selection:bg-emerald-500/30 relative flex flex-col overflow-x-hidden">
       {/* Offline Banner */}
       <AnimatePresence>
         {(!isOnline || isSlowNetwork) && (
@@ -1857,7 +1857,7 @@ ${result.prevention.map(p => `- ${p}`).join('\n')}
             >
               {/* Hero Section */}
               <div className="py-20 text-center relative">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/20 rounded-full blur-[120px] -z-10 pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-emerald-500/20 rounded-full blur-[80px] md:blur-[120px] -z-10 pointer-events-none" />
                 
                 <motion.div 
                   initial={{ scale: 0.9, opacity: 0 }}
