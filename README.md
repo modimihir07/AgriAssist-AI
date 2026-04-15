@@ -67,7 +67,7 @@ AgriAssist AI directly contributes to the following UN Sustainable Development G
 - **Database & Auth**: Firebase (Firestore, Authentication).
 - **Storage**: Browser LocalStorage (Session persistence & Offline cache).
 
-### 🔄 API Resilience
+## 🔄 API Resilience
 The backend implements a **multi-model fallback mechanism** with exponential backoff. If the primary Gemini model is busy or quota-exhausted, the system automatically retries with alternative models (`gemini-3.1-flash-lite-preview`, `gemini-3-flash-preview`, `gemini-3.1-pro-preview`) to ensure maximum uptime even under free-tier limitations.
 ---
 
