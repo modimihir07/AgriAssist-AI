@@ -149,7 +149,7 @@ export const analyzeImage = async (imageBase64, location, temperature, mimeType 
 
     const callApi = async (genAi) => {
       return await genAi.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: {
           parts: [
             { text: prompt },
@@ -335,7 +335,7 @@ export const chatWithAgriBot = async (context, message, location, imageBase64, m
     }
 
     const response = await currentAi.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: contents
     });
     console.log("[DEBUG] AgriBot Chat API call succeeded.");
@@ -419,7 +419,7 @@ export const testGeminiKey = async () => {
         try {
           const ai = new GoogleGenAI({ apiKey: sanitized });
           const response = await ai.models.generateContent({
-            model: "gemini-3-flash-preview",
+            model: "gemini-2.0-flash",
             contents: "Hello, this is a test message to verify the API key."
           });
           
