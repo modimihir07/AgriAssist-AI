@@ -193,13 +193,4 @@ We welcome contributions! Please fork the repository and submit a pull request f
 
 ## 📄 License
 This project is licensed under the **MIT License**.
-## 📁 Assets
 
-All screenshots and images will be stored in the assets/ folder.
-
-## 📱 Preview
-
-<p align="center">
-  <img src="./assets/home-screen.png" alt="Home Screen" width="30%" />
-  <img src="./assets/analysis-result.png" alt="Result Screen" width="30%" />
-</p>
