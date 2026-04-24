@@ -65,7 +65,7 @@ let cachedWorkingKey = null;
 const getValidKey = () => {
   if (cachedWorkingKey) return cachedWorkingKey;
 
-  const keysToCheck = ['GEMINI_KEY', 'GEMINI_API_KEY', 'API_KEY'];
+  const keysToCheck = ['GEMINI_KEY', 'GEMINI_API_KEY'];
   let val = null;
   let source = null;
 
@@ -396,7 +396,7 @@ export const chatWithAgriBot = async (context, message, location, imageBase64, m
 };
 
 export const testGeminiKey = async () => {
-  const keysToCheck = ['GEMINI_KEY', 'GEMINI_API_KEY', 'API_KEY', 'GEMINI_KEY_2'];
+  const keysToCheck = ['GEMINI_KEY', 'GEMINI_API_KEY'];
   const keyStatus = {};
   let workingKeyInfo = null;
   let lastError = null;
