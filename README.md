@@ -8,11 +8,11 @@ AgriAssist AI is a comprehensive full-stack application designed to empower farm
 ## 🔗 Quick Links
 
 <p align="center">
-  <a href="https://agri-assist-ai.vercel.app"><strong>•Live Demo</strong></a>
-  ·
-  <a href="#"><strong>•Watch Demo Video</strong></a>
-  ·
-  <a href="https://github.com/modimihir07/AgriAssist-AI"><strong>•GitHub Repository</strong></a>
+  <a href="https://agri-assist-ai.vercel.app"><strong>Live Demo</strong></a>
+  •
+  <a href="#"><strong>Watch Demo Video</strong></a>
+  •
+  <a href="https://github.com/modimihir07/AgriAssist-AI"><strong>GitHub Repository</strong></a>
 </p>
 
 ---
