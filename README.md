@@ -21,10 +21,10 @@ AgriAssist AI is a comprehensive full-stack application designed to empower farm
 
 <div class="app-preview">
   <div class="preview-item">
-    <img src="./assets/home-screen.png.jpeg" alt="AgriAssist AI Home Screen">
+    <img src="./assets/home-screen-portrait.png.jpeg" alt="Portrait mode preview">
   </div>
   <div class="preview-item">
-    <img src="./assets/analysis-result.png.jpeg" alt="Disease Analysis Result">
+    <img src="./assets/home-screen-landscape.png.jpeg" alt="Landscape mode preview">
   </div>
 </div>
 
@@ -36,13 +36,11 @@ AgriAssist AI is a comprehensive full-stack application designed to empower farm
     gap: 1.5rem;
     margin: 1.5rem 0;
   }
-
   .preview-item {
-    flex: 1 1 280px;           /* grow, shrink, basis ~280px */
+    flex: 1 1 280px;
     max-width: 360px;
     text-align: center;
   }
-
   .preview-item img {
     width: 100%;
     height: auto;
@@ -50,23 +48,10 @@ AgriAssist AI is a comprehensive full-stack application designed to empower farm
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease;
   }
-
-  .preview-item img:hover {
-    transform: scale(1.01);
-  }
-
-  /* Portrait mode (narrow screens): stacks automatically */
   @media (max-width: 640px) {
     .preview-item {
       flex: 1 1 100%;
       max-width: 320px;
-    }
-  }
-
-  /* Landscape mode on mobile (wide but short) – still side by side if space allows */
-  @media (min-width: 641px) and (orientation: landscape) {
-    .preview-item {
-      flex: 1 1 280px;
     }
   }
 </style>
