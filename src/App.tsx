@@ -29,7 +29,7 @@ const translations = {
     api_offline: "API Offline",
     hero_title: "Empowering Farmers with",
     hero_title_accent: "Generative AI",
-    hero_subtitle: "Instant crop disease detection, localized treatment recommendations, and predictive insights powered by Gemini 1.5 Pro Vision.",
+    hero_subtitle: "Instant crop disease detection, localized treatment recommendations, and predictive insights powered by Gemini AI.",
     btn_try_demo: "Try Web Demo",
     btn_view_source: "View Source",
     demo_title: "Live AI Diagnosis Demo",
