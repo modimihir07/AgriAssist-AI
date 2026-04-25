@@ -15,6 +15,17 @@ AgriAssist AI is a comprehensive full-stack application designed to empower farm
   <a href="https://github.com/modimihir07/AgriAssist-AI"><strong>💻 GitHub Repository</strong></a>
 </p>
 
+---
+
+## 📱 Preview
+
+<p align="center">
+  <img src="./assets/home-screen.png.jpeg" alt="AgriAssist AI Home Screen" width="30%" />
+  <img src="./assets/analysis-result.png.jpeg" alt="Disease Analysis Result" width="30%" />
+</p>
+
+---
+
 ## 🚀 Features
 
 ### 🔍 Image Analysis
