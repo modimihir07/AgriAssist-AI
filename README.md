@@ -26,10 +26,10 @@ AgriAssist AI is a comprehensive full-stack application designed to empower farm
   <div class="preview-item">
     <img src="./assets/analysis-result.png.jpeg" alt="Portrait mode preview">
   </div>
-</div>
+
 
 <style>
-  app-preview {
+  .app-preview {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
